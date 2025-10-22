@@ -1,0 +1,43 @@
+{% extends "test.html" %}
+{% block title %}文件浏览与下载{% endblock %}
+{% block content %}
+  <h1>文件浏览与下载</h1>
+  <div style="margin-bottom:8px;color:#666;">
+    <span class="badge">BASE</span> {{ base }}
+  </div>
+
+  <div style="margin:8px 0 16px;color:#666;">
+    当前位置： <a href="{{ url_for('files_bp.list_files') }}">/</a>
+    {% for bc in breadcrumbs %} / <a href="{{ url_for('files_bp.list_files', subpath=bc.rel) }}">{{ bc.name }}</a>{% endfor %}
+  </div>
+
+  {% if parent_rel %}
+    <p><a href="{{ url_for('files_bp.list_files', subpath=parent_rel) }}">⬅ 返回上级</a></p>
+  {% endif %}
+
+  <table>
+    <thead><tr><th>名称</th><th style="width:120px;">大小</th><th>操作</th></tr></thead>
+    <tbody>
+      {% for item in entries %}
+        <tr>
+          <td>
+            {% if item.is_dir %}
+              📁 <a href="{{ url_for('files_bp.list_files', subpath=item.rel) }}">{{ item.name }}</a>
+            {% else %}
+              📄 {{ item.name }}
+            {% endif %}
+          </td>
+          <td>{{ item.size }}</td>
+          <td>
+            {% if not item.is_dir %}
+              <a href="{{ url_for('files_bp.download_file', subpath=item.rel) }}">下载</a>
+            {% endif %}
+          </td>
+        </tr>
+      {% endfor %}
+      {% if not entries %}
+        <tr><td colspan="3">空目录</td></tr>
+      {% endif %}
+    </tbody>
+  </table>
+{% endblock %}

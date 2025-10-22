@@ -1,0 +1,117 @@
+{% extends "test.html" %}
+
+{% block title %}主页{% endblock %}
+
+{% block content %}
+    <div class="welcome-section">
+        <h1>欢迎来到 PotatoBio 平台 🥔</h1>
+        <p>马铃薯生物信息学综合分析平台，提供多组学数据查询与分析工具</p>
+    </div>
+
+    <!-- 功能组件区域 - 2*3 网格布局 -->
+    <div class="function-portals">
+        <div class="portal-title">功能入口</div>
+
+        <div class="portals-grid">
+            <!-- 6个功能卡片保持不变 -->
+            <div class="portal-card">
+                <div class="portal-icon">🧬</div>
+                <div class="portal-content">
+                    <h3>基因组学</h3>
+                    <p>包含马铃薯全基因组序列、基因注释及变异分析数据，支持序列比对与检索</p>
+                    <div class="portal-sub-links">
+                        <a href="{{ url_for('search_cold_bp.index') }}">基因组展示</a> |
+                        <a href="{{ url_for('search_cold_bp.index') }}">ID搜索</a> |
+                        <a href="{{ url_for('search_cold_bp.index') }}">关键字搜索</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="portal-card">
+                <div class="portal-icon">📊</div>
+                <div class="portal-content">
+                    <h3>转录组学</h3>
+                    <p>整合冷/热/盐胁迫处理下的转录组数据，提供差异表达基因分析与可视化</p>
+                    <div class="portal-sub-links">
+                        <a href="{{ url_for('search_Bacterial_wilt_bp.index') }}">Abiotic stress</a>|
+                        <a href="{{ url_for('search_Bacterial_wilt_bp.index') }}">Biotic stress</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="portal-card">
+                <div class="portal-icon">🔬</div>
+                <div class="portal-content">
+                    <h3>蛋白质组学</h3>
+                    <p>包含胁迫响应相关蛋白质序列、结构与相互作用网络数据</p>
+                    <div class="portal-sub-links">
+                        <a >冷处理</a> |
+                        <a >热处理</a> |
+                        <a >盐处理</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="portal-card">
+                <div class="portal-icon">🧪</div>
+                <div class="portal-content">
+                    <h3>代谢组学</h3>
+                    <p>提供不同胁迫条件下的代谢物谱数据，支持代谢通路分析与物质鉴定</p>
+                    <div class="portal-sub-links">
+                        <a href="{{ url_for('search_cold_bp.index') }}">冷处理</a> |
+                        <a href="{{ url_for('search_hot_bp.index') }}">热处理</a> |
+                        <a href="{{ url_for('search_hot_bp.index') }}">盐处理</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="portal-card">
+                <div class="portal-icon">🛠️</div>
+                <div class="portal-content">
+                    <h3>分析工具</h3>
+                    <p>集成生物信息学常用工具，支持序列比对、引物设计等分析功能</p>
+                    <div class="portal-sub-links">
+                        <a href="{{ url_for('search_cold_bp.index') }}">冷处理工具</a> |
+                        <a href="{{ url_for('search_hot_bp.index') }}">热处理工具</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="portal-card">
+                <div class="portal-icon">📥</div>
+                <div class="portal-content">
+                    <h3>数据下载</h3>
+                    <p>提供平台所有组学原始数据及分析结果的下载服务</p>
+                    <a href="{{ url_for('files_bp.list_files') }}">下载中心</a>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block scripts %}
+<style>
+    /* 强制覆盖基模板样式，确保 2×3 布局生效 */
+    .portals-grid {
+        display: grid !important;
+        grid-template-columns: repeat(3, 1fr) !important; /* 强制3列 */
+        gap: 0 !important; /* 消除间距 */
+        padding: 0 !important; /* 消除内边距 */
+    }
+
+    .portal-card {
+        margin: 0 !important; /* 消除卡片外边距 */
+        border-radius: 0 !important; /* 去除圆角 */
+        height: 100% !important; /* 充满行高 */
+        box-shadow: none !important; /* 可选：去除阴影避免间隙感 */
+        border: 1px solid #eee !important; /* 可选：添加边框区分卡片 */
+    }
+
+    /* 响应式调整 */
+    @media (max-width: 768px) {
+        .portals-grid {
+            grid-template-columns: 1fr !important; /* 小屏幕1列 */
+        }
+    }
+</style>
+{% endblock %}

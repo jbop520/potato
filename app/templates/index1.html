@@ -1,0 +1,82 @@
+{% extends "test.html" %}
+
+{% block title %}功能主页{% endblock %}
+
+{% block content %}
+    <!-- 欢迎区域 -->
+    <div class="text-center mb-6">
+        <h1>欢迎使用系统功能中心 🚀</h1>
+        <p class="text-muted mt-2">选择下方功能模块开始操作</p>
+    </div>
+
+    <!-- 核心功能组件区 -->
+    <div class="row g-4">
+        <!-- 搜索功能卡片 -->
+        <div class="col-md-6 col-lg-4">
+            <div class="card h-100 shadow-sm border-primary">
+                <div class="card-body text-center">
+                    <h5 class="card-title text-primary">搜索模块</h5>
+                    <p class="card-text text-muted">快速检索系统内的资源和数据</p>
+                    <a href="{{ url_for('search_bp.index') }}" class="btn btn-primary mt-3">
+                        进入搜索 <i class="bi bi-search"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- 文件管理卡片 -->
+        <div class="col-md-6 col-lg-4">
+            <div class="card h-100 shadow-sm border-secondary">
+                <div class="card-body text-center">
+                    <h5 class="card-title text-secondary">文件管理</h5>
+                    <p class="card-text text-muted">上传、查看和管理你的文件资源</p>
+                    <a href="/files" class="btn btn-secondary mt-3">
+                        进入管理 <i class="bi bi-folder"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- 数据统计卡片（示例扩展功能） -->
+        <div class="col-md-6 col-lg-4">
+            <div class="card h-100 shadow-sm border-success">
+                <div class="card-body text-center">
+                    <h5 class="card-title text-success">数据统计</h5>
+                    <p class="card-text text-muted">查看系统资源的统计分析结果</p>
+                    <a href="/stats" class="btn btn-success mt-3">
+                        查看统计 <i class="bi bi-bar-chart"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- 系统设置卡片（示例扩展功能） -->
+        <div class="col-md-6 col-lg-4">
+            <div class="card h-100 shadow-sm border-warning">
+                <div class="card-body text-center">
+                    <h5 class="card-title text-warning">系统设置</h5>
+                    <p class="card-text text-muted">配置个人偏好和系统参数</p>
+                    <a href="/settings" class="btn btn-warning mt-3">
+                        进入设置 <i class="bi bi-gear"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 快捷操作区 -->
+    <div class="mt-8 p-4 bg-light rounded-3">
+        <h5 class="mb-3">快捷操作</h5>
+        <div class="d-flex flex-wrap gap-2">
+            <button class="btn btn-outline-primary">
+                <i class="bi bi-upload"></i> 快速上传
+            </button>
+            <button class="btn btn-outline-secondary">
+                <i class="bi bi-download"></i> 批量下载
+            </button>
+            <button class="btn btn-outline-danger">
+                <i class="bi bi-trash"></i> 清空缓存
+            </button>
+        </div>
+    </div>
+{% endblock %}

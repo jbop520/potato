@@ -1,0 +1,256 @@
+{% extends "test.html" %}
+{% block title %}bio_zhu 查询{% endblock %}
+{% block content %}
+  <h1>bio_zhu 查询</h1>
+  <form method="get" action="{{ url_for('search1_bp.index') }}">
+    <input name="q" type="text" placeholder="输入 names/Transcript_ID 进行查询" value="{{ q|e }}" autofocus />
+    <button type="submit">查询</button>
+    <label style="margin-left: 15px;">
+      <input type="checkbox" name="show_heatmap" value="1" {% if request.args.get('show_heatmap') == '1' %}checked{% endif %}>
+      显示热力图
+    </label>
+    <label style="margin-left: 15px;">
+      <input type="checkbox" name="show_linechart" value="1" {% if request.args.get('show_linechart') == '1' %}checked{% endif %}>
+      显示折线图
+    </label>
+  </form>
+
+  {# 无结果提示 #}
+  {% if q and not results %}
+    <div class="empty">没有找到与 "<b>{{ q|e }}</b>" 匹配的记录。</div>
+  {% endif %}
+
+  {# 图表容器（多表数据：每个表对应一组图表） #}
+  {% if request.args.get('show_heatmap') == '1' or request.args.get('show_linechart') == '1' %}
+    {% for table_name, rows in results %}
+      <div class="table-charts" data-table="{{ table_name }}" style="margin: 30px 0; border-top: 1px solid #eee; padding-top: 20px;">
+        <h3>{{ table_name }} 数据图表</h3>
+
+        {# 热力图（按表显示） #}
+        {% if request.args.get('show_heatmap') == '1' %}
+          <div id="heatmap-container-{{ table_name }}" style="margin: 15px 0; border: 1px solid #ddd; border-radius: 5px; padding: 15px; background-color: #f9f9f9;">
+            <h4>特征热力图（x: 字段名，y: Transcript_ID）</h4>
+            <div id="heatmap-{{ table_name }}" style="width: 100%; height: 400px;"></div>
+            <div id="heatmap-error-{{ table_name }}" style="display: none; color: #dc3545; padding: 10px;"></div>
+          </div>
+        {% endif %}
+
+        {# 折线图（按表显示） #}
+        {% if request.args.get('show_linechart') == '1' %}
+          <div id="linechart-container-{{ table_name }}" style="margin: 15px 0; border: 1px solid #ddd; border-radius: 5px; padding: 15px; background-color: #f9f9f9;">
+            <h4>字段数值折线图（x: 字段名，y: 数值）</h4>
+            <div id="linechart-{{ table_name }}" style="width: 100%; height: 400px;"></div>
+            <div id="linechart-error-{{ table_name }}" style="display: none; color: #dc3545; padding: 10px;"></div>
+          </div>
+        {% endif %}
+      </div>
+    {% endfor %}
+  {% endif %}
+
+  {# 原始查询结果表格（多表多行） #}
+  {% for table_name, rows in results %}
+    <div style="margin: 30px 0;">
+      <span class="badge">{{ table_name }}</span>
+      {% if rows %}
+        {# 获取当前表的所有字段名（key） #}
+        {% set table_keys = rows[0].keys()|list %}
+        <table class="results-table" data-table="{{ table_name }}">
+          <thead>
+            <tr>
+              <th>#</th>
+              {% for key in table_keys %}
+                <th data-field="{{ key }}">{{ key }}</th>
+              {% endfor %}
+            </tr>
+          </thead>
+          <tbody>
+            {% for row in rows %}
+              <tr data-row-index="{{ loop.index }}">
+                <td>{{ loop.index }}</td>
+                {% for key in table_keys %}
+                  <td data-field="{{ key }}">{{ row.get(key, '') }}</td>
+                {% endfor %}
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      {% else %}
+        <div class="empty">该表无匹配记录</div>
+      {% endif %}
+    </div>
+  {% endfor %}
+
+  <div class="empty">提示：若你的表名不是 {{tbl804}} / {{tbl882}}，请在 <code>app/config.py</code> 修改。</div>
+{% endblock %}
+
+{% block scripts %}
+  {{ super() }}
+  {# 仅在勾选图表且有结果时加载Plotly #}
+  {% if (request.args.get('show_heatmap') == '1' or request.args.get('show_linechart') == '1') and results %}
+    <script src="https://cdn.plot.ly/plotly-2.24.1.min.js"></script>
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const showHeatmap = urlParams.get('show_heatmap') === '1';
+        const showLinechart = urlParams.get('show_linechart') === '1';
+
+        {# 遍历每个表，分别提取数据并生成图表 #}
+        {% for table_name, rows in results %}
+          const tableData = extractTableData('{{ table_name }}');
+          if (showHeatmap) generateTableHeatmap('{{ table_name }}', tableData);
+          if (showLinechart) generateTableLinechart('{{ table_name }}', tableData);
+        {% endfor %}
+      });
+
+      /**
+       * 核心：提取单个表的x_data（key）和y_data（value）
+       * @param {string} tableName - 表名
+       * @returns {Object} {
+       *   xData: 字段名列表（key）,
+       *   yData: 数值矩阵（每行对应一条记录的字段值）,
+       *   yLabels: Transcript_ID列表（热力图y轴标签）,
+       *   hasValidData: 是否有有效数值数据
+       * }
+       */
+      function extractTableData(tableName) {
+        const table = document.querySelector(`.results-table[data-table="${tableName}"]`);
+        if (!table) return { xData: [], yData: [], yLabels: [], hasValidData: false };
+
+        // 1. 提取x_data：当前表的所有字段名（排除非数值相关字段）
+        const headerCells = table.querySelectorAll('thead th[data-field]');
+        const xData = Array.from(headerCells)
+          .map(th => th.getAttribute('data-field'))
+          .filter(key => !['names', 'Transcript_ID', '#'].includes(key)); // 排除非特征字段
+
+        // 2. 提取yLabels：每行的Transcript_ID（作为热力图y轴标签）
+        const rowCells = table.querySelectorAll('tbody tr');
+        const yLabels = Array.from(rowCells)
+          .map(row => {
+            const tidCell = row.querySelector('td[data-field="Transcript_ID"]');
+            return tidCell ? tidCell.textContent.trim() : `记录${row.getAttribute('data-row-index')}`;
+          });
+
+        // 3. 提取y_data：数值矩阵（每行对应一条记录，每列对应xData的字段值）
+        const yData = [];
+        rowCells.forEach(row => {
+          const rowValues = [];
+          xData.forEach(key => {
+            const valueCell = row.querySelector(`td[data-field="${key}"]`);
+            if (!valueCell) {
+              rowValues.push(null);
+              return;
+            }
+
+            // 转换为数值（无效值设为null）
+            const rawValue = valueCell.textContent.trim();
+            const numericValue = parseFloat(rawValue);
+            rowValues.push(isNaN(numericValue) ? null : numericValue);
+          });
+          yData.push(rowValues);
+        });
+
+        // 4. 检查是否有有效数据
+        const hasValidData = yData.some(row => row.some(val => val !== null));
+
+        return { xData, yData, yLabels, hasValidData };
+      }
+
+      /**
+       * 为单个表生成热力图（x: key，y: Transcript_ID，z: value）
+       * @param {string} tableName - 表名
+       * @param {Object} tableData - extractTableData返回的数据
+       */
+      function generateTableHeatmap(tableName, tableData) {
+        const container = document.getElementById(`heatmap-${tableName}`);
+        const errorContainer = document.getElementById(`heatmap-error-${tableName}`);
+        if (!container || !tableData.hasValidData || tableData.xData.length < 2) {
+          container.style.display = 'none';
+          errorContainer.textContent = tableData.xData.length < 2
+            ? "字段数不足2个，无法生成热力图"
+            : "无有效数值数据，无法生成热力图";
+          errorContainer.style.display = 'block';
+          return;
+        }
+
+        // Plotly热力图配置（z为yData数值矩阵）
+        const plotData = [{
+          x: tableData.xData, // x轴：字段名（key）
+          y: tableData.yLabels, // y轴：Transcript_ID（每条记录标识）
+          z: tableData.yData, // z轴：数值（value）
+          type: 'heatmap',
+          colorscale: 'Viridis',
+          colorbar: { title: '字段数值', titleside: 'right' },
+          hovertemplate: `<b>字段</b>: %{x}<br><b>记录</b>: %{y}<br><b>数值</b>: %{z:.4f}<extra></extra>`
+        }];
+
+        const layout = {
+          title: `${tableName} - 字段数值热力图`,
+          xaxis: { title: '字段名（x_data: key）', tickangle: -45, automargin: true },
+          yaxis: { title: 'Transcript_ID（y轴标签）', automargin: true },
+          margin: { l: 150, r: 80, b: 200, t: 50, pad: 4 },
+          height: 400
+        };
+
+        Plotly.newPlot(container, plotData, layout)
+          .catch(err => {
+            container.style.display = 'none';
+            errorContainer.textContent = `热力图渲染失败: ${err.message}`;
+            errorContainer.style.display = 'block';
+          });
+      }
+
+      /**
+       * 为单个表生成折线图（每条记录对应一条线，x: key，y: value）
+       * @param {string} tableName - 表名
+       * @param {Object} tableData - extractTableData返回的数据
+       */
+      function generateTableLinechart(tableName, tableData) {
+        const container = document.getElementById(`linechart-${tableName}`);
+        const errorContainer = document.getElementById(`linechart-error-${tableName}`);
+        if (!container || !tableData.hasValidData || tableData.xData.length === 0) {
+          container.style.display = 'none';
+          errorContainer.textContent = tableData.xData.length === 0
+            ? "无有效字段名，无法生成折线图"
+            : "无有效数值数据，无法生成折线图";
+          errorContainer.style.display = 'block';
+          return;
+        }
+
+        // 生成多条线（每条线对应一条记录）
+        const plotData = tableData.yData.map((rowValues, index) => {
+          // 过滤当前行的无效数据（null值不显示）
+          const validPoints = rowValues
+            .map((val, idx) => val !== null ? { x: tableData.xData[idx], y: val } : null)
+            .filter(Boolean);
+
+          return {
+            x: validPoints.map(p => p.x), // x轴：字段名（key）
+            y: validPoints.map(p => p.y), // y轴：字段数值（value）
+            mode: 'lines+markers',
+            name: tableData.yLabels[index], // 图例名：Transcript_ID
+            line: { width: 2 },
+            marker: { size: 6 },
+            hovertemplate: `<b>记录</b>: ${tableData.yLabels[index]}<br><b>字段</b>: %{x}<br><b>数值</b>: %{y:.4f}<extra></extra>`
+          };
+        });
+
+        const layout = {
+          title: `${tableName} - 各记录字段数值对比`,
+          xaxis: { title: '字段名（x_data: key）', tickangle: -45, automargin: true },
+          yaxis: { title: '字段数值（y_data: value）', automargin: true },
+          margin: { l: 80, r: 50, b: 200, t: 50, pad: 4 },
+          height: 400,
+          showlegend: true,
+          legend: { orientation: 'v', y: 1, x: 1.1 } // 图例放在右侧
+        };
+
+        Plotly.newPlot(container, plotData, layout)
+          .catch(err => {
+            container.style.display = 'none';
+            errorContainer.textContent = `折线图渲染失败: ${err.message}`;
+            errorContainer.style.display = 'block';
+          });
+      }
+    </script>
+  {% endif %}
+{% endblock %}

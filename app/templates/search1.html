@@ -1,0 +1,243 @@
+{% extends "test.html" %}
+{% block title %}bio_zhu 查询{% endblock %}
+
+{% block head %}
+    <!-- 使用CDN引入ECharts，解决本地路径问题 -->
+    <script src="D:/potato/bio_zhu/app/js/echartss.min"></script>
+    <style>
+        .badge {
+            display: inline-block;
+            padding: 3px 8px;
+            background-color: #e6f7ff;
+            color: #1890ff;
+            border-radius: 4px;
+            margin: 10px 0;
+            font-size: 14px;
+        }
+
+        .empty {
+            color: #666;
+            padding: 15px;
+            margin: 10px 0;
+            background-color: #f5f5f5;
+            border-radius: 4px;
+        }
+
+        /* 优化表格边框样式 */
+        .table-scroll-wrapper {
+            overflow-x: auto;
+            margin: 15px 5px 30px;
+            padding: 10px;
+            /* 添加表格容器阴影，增强立体感 */
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            border-radius: 6px;
+        }
+
+        .data-table {
+            border-collapse: collapse;
+            /* 强化外边框 */
+            border: 10px solid #333;
+            width: 100%;
+            min-width: 600px;
+        }
+
+        .data-table th {
+            padding: 12px 15px;
+            text-align: center;
+            /* 表头使用更粗的边框 */
+            border: 2px solid #333;
+            background-color: #f0f0f0;
+            font-weight: bold;
+            color: #222;
+        }
+
+        .data-table td {
+            padding: 12px 15px;
+            text-align: center;
+            /* 单元格使用清晰的边框 */
+            border: 1px solid #555;
+            word-wrap: break-word;
+        }
+
+        /* 隔行变色，增强可读性 */
+        .data-table tbody tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+
+        /* 鼠标悬停效果 */
+        .data-table tbody tr:hover {
+            background-color: #f0f7ff;
+        }
+
+        input {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            width: 300px;
+            margin-right: 10px;
+        }
+
+        button {
+            padding: 8px 16px;
+            background-color: #1890ff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #096dd9;
+        }
+
+        h1 {
+            color: #333;
+            margin: 20px 0;
+        }
+
+        /* 优化图表容器样式 */
+        .chart-wrapper {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #e8e8e8;
+            border-radius: 4px;
+            width: 100%;
+            overflow: hidden;
+        }
+
+        .chart-container {
+            width: 100%;
+            height: 400px;
+        }
+
+        /* 响应式调整 */
+        @media (max-width: 1200px) {
+            .data-table {
+                table-layout: auto;
+            }
+        }
+
+        @media (max-width: 768px) {
+            input {
+                width: 100%;
+                margin-right: 0;
+                margin-bottom: 10px;
+            }
+
+            button {
+                width: 100%;
+            }
+
+            .chart-wrapper {
+                padding: 10px;
+            }
+
+            .table-scroll-wrapper {
+                margin: 10px 0 20px;
+                padding: 5px;
+            }
+
+            .data-table th, .data-table td {
+                padding: 8px 10px;
+            }
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+  <h1>bio_zhu 查询</h1>
+
+  <form method="get" action="{{ url_for('search_bp.index') }}">
+    <input name="q" type="text" placeholder="输入 c804.names 或 c882.Transcript_ID" value="{{ q|e }}" autofocus />
+    <button type="submit">查询</button>
+  </form>
+
+  {% if q and not results %}
+    <div class="empty">没有找到与 "<b>{{ q|e }}</b>" 匹配的记录。</div>
+  {% endif %}
+
+  {% for table_name, rows in results %}
+    <div><span class="badge">{{ table_name }}</span></div>
+
+    <!-- 关联基因查询表单 -->
+    <form method="get" action="{{ url_for('search2_bp.index') }}" style="margin: 20px 0;">
+        <input type="hidden" name="q" value="{{ q|e }}">
+        <button
+            type="submit"
+            style="padding: 10px 24px; background-color: #2563eb; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 16px; transition: background-color 0.2s;"
+            onmouseover="this.style.backgroundColor='#1d4ed8'"
+            onmouseout="this.style.backgroundColor='#2563eb'"
+        >
+            关联基因
+        </button>
+    </form>
+
+    {% for row in rows %}
+      <!-- 添加滚动容器包裹表格 -->
+      <div class="table-scroll-wrapper">
+        <table class="data-table">
+          <thead>
+            <tr>
+              {% for key in row.keys() %}
+                <th>{{ key }}</th>
+              {% endfor %}
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              {% for value in row.values() %}
+                <td>{{ value }}</td>
+              {% endfor %}
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    {% endfor %}
+  {% endfor %}
+
+  {% if chart_code %}
+    <div class="chart-wrapper">
+      <h3></h3>
+      <div class="chart-container" data-echarts-instance>
+        {{ chart_code|safe }}
+      </div>
+    </div>
+  {% endif %}
+
+  {% if heatmap_code %}
+    <div class="chart-wrapper">
+      <h3></h3>
+      <div class="chart-container" data-echarts-instance>
+        {{ heatmap_code|safe }}
+      </div>
+    </div>
+  {% endif %}
+
+  {% if chart_code or heatmap_code %}
+    <!-- ECharts自适应调整脚本 -->
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        // 初始调整图表大小
+        function resizeCharts() {
+          if (typeof echarts !== 'undefined') {
+            const chartElements = document.querySelectorAll('[data-echarts-instance]');
+            chartElements.forEach(function(element) {
+              const chart = echarts.getInstanceByDom(element);
+              if (chart) {
+                chart.resize();
+              }
+            });
+          }
+        }
+
+        // 页面加载完成后调整一次
+        resizeCharts();
+
+        // 窗口大小改变时调整
+        window.addEventListener('resize', resizeCharts);
+      });
+    </script>
+  {% endif %}
+
+  <div class="empty">提示：若你的表名不是 {{ tbl804 if tbl804 is defined else '' }} / {{ tbl882 if tbl882 is defined else '' }}，请在 <code>app/config.py</code> 修改。</div>
+{% endblock %}

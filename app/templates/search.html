@@ -1,0 +1,31 @@
+{% extends "test.html" %}
+{% block title %}bio_zhu 查询{% endblock %}
+{% block content %}
+  <h1>bio_zhu 查询</h1>
+  <form method="get" action="{{ url_for('search_bp.index') }}">
+    <input name="q" type="text" placeholder="输入 c804.names 或 c882.Transcript_ID" value="{{ q|e }}" autofocus />
+    <button type="submit">查询</button>
+  </form>
+
+  {% if q and not results %}
+    <div class="empty">没有找到与 “<b>{{ q|e }}</b>” 匹配的记录。</div>
+  {% endif %}
+
+  {% for table_name, rows in results %}
+    <div><span class="badge">{{ table_name }}</span></div>
+    {% for row in rows %}
+      <table>
+        <tbody>
+        {% for k, v in row.items() %}
+          <tr>
+            <th>{{ k }}</th>
+            <td>{{ v }}</td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    {% endfor %}
+  {% endfor %}
+
+  <div class="empty">提示：若你的表名不是 {{tbl804}} / {{tbl882}}，请在 <code>app/config.py</code> 修改。</div>
+{% endblock %}

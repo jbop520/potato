@@ -1,0 +1,209 @@
+# from flask import Blueprint, render_template, request, current_app
+# from ..db import query_one_table
+#
+# search_bp = Blueprint("search_bp", __name__)
+#
+# # 新主页路由
+# @search_bp.route("/", methods=["GET"])
+# def index():
+#     return render_template("index.html")
+#
+# # 原搜索功能，换到 /search
+# @search_bp.route("/search", methods=["GET"])
+# def search_page():
+#     q = (request.args.get("q") or "").strip()
+#     results = []
+#     cfg = current_app.config
+#
+#     if q:
+#         rows_c804 = query_one_table(cfg["TABLE_C804"], "names", q)
+#         if rows_c804:
+#             results.append((cfg["TABLE_C804"], rows_c804))
+#
+#         rows_c882 = query_one_table(cfg["TABLE_C882"], "Transcript_ID", q)
+#         if rows_c882:
+#             results.append((cfg["TABLE_C882"], rows_c882))
+#
+#     return render_template(
+#         "search.html",
+#         q=q,
+#         results=results,
+#         tbl804=cfg["TABLE_C804"],
+#         tbl882=cfg["TABLE_C882"]
+#     )
+
+
+from flask import Blueprint, render_template, request, current_app
+from ..db import query_one_table
+from pyecharts.charts import Line, HeatMap
+from pyecharts import options as opts
+
+# 调整JsCode的导入路径，兼容旧版本pyecharts
+try:
+    from pyecharts import JsCode  # 适用于较新版本
+except ImportError:
+    from pyecharts.commons.utils import JsCode  # 适用于旧版本
+
+search_cold_bp = Blueprint("search_cold_bp", __name__)
+
+
+def create_line_chart(results):
+    try:
+        if results and len(results) > 0 and len(results[0][1]) > 0:
+            data_list = results[0][1][0]
+            keys = list(data_list.keys())
+            values = list(data_list.values())
+
+            numeric_keys = []
+            numeric_values = []
+            for k, v in zip(keys, values):
+                try:
+                    numeric_values.append(float(v))
+                    numeric_keys.append(k)
+                except (ValueError, TypeError):
+                    continue
+
+            if numeric_keys:
+                line = (
+                    Line(init_opts=opts.InitOpts(width="100%", height="400px"))
+                    .add_xaxis(numeric_keys)
+                    .add_yaxis("数据值", numeric_values)
+                    .set_global_opts(
+                        title_opts=opts.TitleOpts(title="数据折线图"),
+                        tooltip_opts=opts.TooltipOpts(trigger="axis"),
+                        xaxis_opts=opts.AxisOpts(
+                            interval=0,
+                            axislabel_opts=opts.LabelOpts(font_size=10),
+                            name="属性"),
+                        yaxis_opts=opts.AxisOpts(name="数值"),
+                    )
+                )
+                return line.render_embed()
+    except Exception as e:
+        current_app.logger.error(f"生成折线图失败: {str(e)}")
+    return None
+
+
+def create_heatmap(results):
+    try:
+        if results and len(results) > 0 and len(results[0][1]) > 0:
+            heatmap_data = []
+            data_rows = results[0][1][:5]
+
+            numeric_keys = []
+            for row in data_rows:
+                for k, v in row.items():
+                    try:
+                        float(v)
+                        if k not in numeric_keys:
+                            numeric_keys.append(k)
+
+                    except (ValueError, TypeError):
+                        continue
+                if len(numeric_keys) >= 10:
+                    break
+
+            if len(numeric_keys) >= 1 and len(data_rows) >= 1:
+                for y, row in enumerate(data_rows):
+                    for x, key in enumerate(numeric_keys):
+                        try:
+                            value = float(row.get(key, 0))
+                            heatmap_data.append([x, y, value])
+                        except (ValueError, TypeError):
+                            heatmap_data.append([x, y, 0])
+
+                heatmap = (
+                    HeatMap(init_opts=opts.InitOpts(width="100%", height="200px"))
+                    .add_xaxis(numeric_keys)
+                    .add_yaxis(
+                        "数据行",
+                        [f"记录 {i + 1}" for i in range(len(data_rows))],
+                        heatmap_data,
+                        label_opts=opts.LabelOpts(
+                            is_show=True,
+                            formatter=JsCode("function(params){return params.data[2].toFixed(2);}")
+                        ),
+                    )
+                    .set_global_opts(
+
+                        title_opts=opts.TitleOpts(title="数据热力图"),
+                        visualmap_opts=opts.VisualMapOpts(),
+                        xaxis_opts=opts.AxisOpts(
+
+
+                            type_="category",
+                            axislabel_opts=opts.LabelOpts(
+                                font_size=10,
+                                interval=0,
+                                ),
+
+
+                            name="属性"
+                        ),
+                        yaxis_opts=opts.AxisOpts(
+                            type_="category",
+                            name="数据记录"
+                        ),
+                    )
+                )
+                return heatmap.render_embed()
+    except Exception as e:
+        current_app.logger.error(f"生成热力图失败: {str(e)}")
+    return None
+
+
+def find_associated_gene(query_value, cfg):
+    """修改为返回所有关联基因的列表"""
+    query_value = query_value.strip()
+    associated_genes = []
+
+    # 1. 用names字段查询，获取所有匹配的Transcript_ID
+    rows_by_names = query_one_table(cfg["LINKS_804_882"], "names", query_value)
+    if rows_by_names:
+        associated_genes.extend([row.get("Transcript_ID") for row in rows_by_names if row.get("Transcript_ID")])
+
+    # 2. 用Transcript_ID字段查询，获取所有匹配的names
+    rows_by_transcript = query_one_table(cfg["LINKS_804_882"], "Transcript_ID", query_value)
+    if rows_by_transcript:
+        associated_genes.extend([row.get("names") for row in rows_by_transcript if row.get("names")])
+
+    # 去重并返回（保持顺序）
+    return list(dict.fromkeys(associated_genes))  # 去重但保留首次出现顺序
+
+
+
+
+# 搜索
+@search_cold_bp.route("/", methods=["GET"])
+def index():
+    q = (request.args.get("q") or "").strip()
+
+    results = []
+    chart_code = None
+    heatmap_code = None
+    cfg = current_app.config
+
+    if q:
+        rows_c804 = query_one_table(cfg["TABLE_C804"], "names", q)
+        if rows_c804:
+            results.append((cfg["TABLE_C804"], rows_c804))
+
+        rows_c882 = query_one_table(cfg["TABLE_C882"], "Transcript_ID", q)
+        if rows_c882:
+            results.append((cfg["TABLE_C882"], rows_c882))
+
+        if results:
+            chart_code = create_line_chart(results)
+            heatmap_code = create_heatmap(results)
+    associated_genes = find_associated_gene(q, cfg) if q else []
+
+    return render_template(
+        "search_cold.html",
+        q=q,
+        results=results,
+        chart_code=chart_code,
+        heatmap_code=heatmap_code,
+        associated_genes=associated_genes,
+        tbl804=cfg["TABLE_C804"],
+        tbl882=cfg["TABLE_C882"]
+    )

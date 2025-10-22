@@ -1,0 +1,805 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PotatoBio - 马铃薯生物信息学平台</title>
+    <!-- ECharts 脚本加载：使用 Flask 静态文件路径，适配项目根目录的 static 文件夹 -->
+   <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+    <style>
+        /* 主页欢迎区域 */
+        .welcome-section {
+            text-align: center;
+            padding: 30px 0;
+            margin-bottom: 20px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .welcome-section h1 {
+            color: #2a7a3e;
+            font-size: 28px;
+            margin-bottom: 15px;
+        }
+
+        .welcome-section p {
+            color: #666;
+            font-size: 16px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        /* 功能组件区域 - 固定为 2×3 布局 */
+        .function-portals {
+            margin-top: 30px;
+        }
+
+        .portal-title {
+            background-color: #2a7a3e;
+            color: white;
+            padding: 12px 20px;
+            font-size: 18px;
+            font-weight: bold;
+            border-radius: 6px 6px 0 0;
+            margin-bottom: 0;
+        }
+
+        .portals-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 0;
+            padding: 0;
+            background-color: #f9f9f9;
+            border-radius: 0 0 6px 6px;
+            border: 1px solid #eee;
+            border-top: none;
+        }
+
+        .portal-card {
+            background-color: white;
+            padding: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            height: 100%;
+            border: 1px solid #eee;
+            margin: 0;
+        }
+
+        .portal-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 15px rgba(42, 122, 62, 0.1);
+        }
+
+        .portal-icon {
+            font-size: 40px;
+            color: #2a7a3e;
+            margin-bottom: 15px;
+        }
+
+        .portal-content h3 {
+            color: #2a7a3e;
+            margin-top: 0;
+            margin-bottom: 10px;
+            font-size: 18px;
+        }
+
+        .portal-content p {
+            color: #666;
+            font-size: 14px;
+            line-height: 1.6;
+            margin-bottom: 15px;
+        }
+
+        .portal-link {
+            display: inline-block;
+            color: #2a7a3e;
+            font-weight: 500;
+            text-decoration: none;
+            padding: 5px 0;
+            border-bottom: 2px solid #2a7a3e;
+        }
+
+        .portal-link:hover {
+            text-decoration: none;
+            color: #1e5c2d;
+            border-color: #1e5c2d;
+        }
+
+        .portal-sub-links {
+            margin-top: 10px;
+            font-size: 14px;
+        }
+
+        .portal-sub-links a {
+            color: #1890ff;
+            margin: 0 3px;
+        }
+
+        .portal-sub-links a:hover {
+            color: #096dd9;
+        }
+
+        /* 响应式调整 */
+        @media (max-width: 768px) {
+            .portals-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .welcome-section h1 {
+                font-size: 24px;
+            }
+        }
+
+        /* 基础重置 */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: "Helvetica Neue", Helvetica, "PingFang SC", "Hiragino Sans GB", Arial, sans-serif;
+        }
+
+        body {
+            background-color: #f5f7fa;
+            color: #303133;
+            line-height: 1.6;
+            padding-bottom: 40px;
+        }
+
+        /* 通用组件样式 */
+        .badge {
+            display: inline-block;
+            padding: 3px 8px;
+            background-color: #e6f7ff;
+            color: #1890ff;
+            border-radius: 4px;
+            margin: 10px 0;
+            font-size: 14px;
+        }
+
+        .empty {
+            color: #666;
+            padding: 15px;
+            margin: 10px 0;
+            background-color: #f5f5f5;
+            border-radius: 4px;
+            border: 1px solid #eee;
+        }
+
+        input[type="text"],
+        input[type="checkbox"] {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        input[type="text"] {
+            width: 300px;
+            margin-right: 10px;
+        }
+
+        button {
+            padding: 8px 16px;
+            background-color: #1890ff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.2s;
+        }
+
+        button:hover {
+            background-color: #096dd9;
+        }
+
+        a {
+            color: #1890ff;
+            text-decoration: none;
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }
+
+        h1 {
+            color: #333;
+            margin: 0 0 20px 0;
+            font-size: 24px;
+        }
+
+        h3 {
+            color: #333;
+            margin: 20px 0 15px 0;
+            font-size: 18px;
+        }
+
+        h4 {
+            color: #444;
+            margin: 15px 0 10px 0;
+            font-size: 16px;
+        }
+
+        /* 顶部导航栏样式 */
+        .header {
+            background: linear-gradient(135deg, #2a7a3e 0%, #1e5c2d 100%);
+            color: white;
+            padding: 0 20px;
+            box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+            margin: 20px;
+        }
+
+        .header-container {
+            display: flex;
+            align-items: center;
+            height: 70px;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            font-size: 24px;
+            font-weight: bold;
+            margin-right: 40px;
+            min-width: 180px;
+        }
+
+        .logo-icon {
+            font-size: 32px;
+            margin-right: 12px;
+        }
+
+        .nav-menu {
+            display: flex;
+            height: 100%;
+            flex-grow: 1;
+        }
+
+        .nav-item {
+            position: relative;
+            padding: 0 25px;
+            height: 70px;
+            line-height: 70px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s;
+            white-space: nowrap;
+        }
+
+        .nav-item:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .nav-item.active {
+            background-color: rgba(255, 255, 255, 0.15);
+        }
+
+        .dropdown {
+            position: absolute;
+            top: 70px;
+            left: 0;
+            width: 220px;
+            background: white;
+            box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
+            border-radius: 4px;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(-10px);
+            transition: all 0.3s;
+        }
+
+        .nav-item:hover .dropdown {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+
+        .dropdown-item {
+            padding: 12px 20px;
+            color: #606266;
+            border-bottom: 1px solid #ebeef5;
+            transition: background-color 0.3s;
+            text-decoration: none;
+            display: block;
+        }
+
+        .dropdown-item:last-child {
+            border-bottom: none;
+        }
+
+        .dropdown-item:hover {
+            background-color: #f5f7fa;
+            color: #2a7a3e;
+        }
+
+        .dropdown-item span.icon {
+            margin-right: 10px;
+        }
+
+        /* 二级下拉菜单样式 */
+        .has-submenu {
+            position: relative;
+            cursor: pointer;
+        }
+
+        .sub-dropdown {
+            position: absolute;
+            top: 0;
+            left: 100%;
+            width: 180px;
+            background: white;
+            box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
+            border-radius: 4px;
+            z-index: 1001;
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(-10px);
+            transition: all 0.3s;
+        }
+
+        .has-submenu:hover .sub-dropdown {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+
+        .sub-dropdown-item {
+            display: block;
+            padding: 12px 20px;
+            color: #606266;
+            border-bottom: 1px solid #ebeef5;
+            transition: background-color 0.3s;
+            text-decoration: none;
+        }
+
+        .sub-dropdown-item:last-child {
+            border-bottom: none;
+        }
+
+        .sub-dropdown-item:hover {
+            background-color: #f5f7fa;
+            color: #2a7a3e;
+            text-decoration: none;
+        }
+
+        .sub-dropdown-item span.icon {
+            margin-right: 10px;
+        }
+
+        /* 内容容器样式 */
+        .content-container {
+            max-width: 1400px;
+            margin: 0 auto 30px;
+            padding: 30px;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.05);
+        }
+
+        /* 表格样式（仅作用于基模板自身表格，不影响子模板滚动表格） */
+        table.base-table {
+            border-collapse: collapse;
+            width: 100%;
+            margin: 10px 0 20px;
+            font-size: 14px;
+        }
+
+        table.base-table th,
+        table.base-table td {
+            padding: 10px 15px;
+            text-align: left;
+            border: 1px solid #e8e8e8;
+            word-wrap: break-word;
+            word-break: break-all;
+        }
+
+        table.base-table th {
+            background-color: #fafafa;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .results-table {
+            border: 1px solid #e8e8e8;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .results-table th {
+            position: relative;
+            text-align: center;
+        }
+
+        .results-table td {
+            text-align: center;
+        }
+
+        /* 响应式适配 */
+        @media (max-width: 768px) {
+            .header {
+                margin: 10px;
+            }
+
+            .header-container {
+                flex-direction: column;
+                height: auto;
+                padding: 15px 0;
+            }
+
+            .logo {
+                margin-right: 0;
+                margin-bottom: 15px;
+                justify-content: center;
+            }
+
+            .nav-menu {
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+
+            .nav-item {
+                padding: 0 15px;
+                height: 50px;
+                line-height: 50px;
+            }
+
+            .dropdown {
+                top: 50px;
+            }
+
+            .content-container {
+                padding: 20px 15px;
+                margin: 10px;
+            }
+
+            input[type="text"] {
+                width: 100%;
+                margin-right: 0;
+                margin-bottom: 10px;
+            }
+
+            form {
+                flex-direction: column;
+                gap: 10px;
+            }
+
+            .table-wrapper {
+                overflow-x: auto;
+                margin: 10px 0 20px;
+            }
+
+            table.base-table {
+                min-width: 600px;
+            }
+        }
+
+        /* 三级菜单样式 */
+        .has-thirdmenu {
+            position: relative;
+            cursor: pointer;
+        }
+
+        .third-dropdown {
+            position: absolute;
+            top: 0;
+            left: 100%;
+            width: 200px;
+            background: white;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.1);
+            border-radius: 4px;
+            z-index: 1002;
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(-10px);
+            transition: all 0.3s;
+        }
+
+        .has-thirdmenu:hover .third-dropdown {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+
+        .third-dropdown-item {
+            display: block;
+            padding: 12px 20px;
+            color: #606266;
+            border-bottom: 1px solid #ebeef5;
+            text-decoration: none;
+        }
+
+        .third-dropdown-item:hover {
+            background-color: #f5f7fa;
+            color: #2a7a3e;
+        }
+    </style>
+</head>
+<body>
+    <!-- 顶部导航栏 -->
+    <div class="header">
+        <div class="header-container">
+            <!-- Logo添加首页链接 -->
+            <a href="{{ url_for('index_bp.index') }}" style="text-decoration: none; color: white;">
+                <div class="logo">
+                    <span class="logo-icon">🥔</span>
+                    <span>PotatoBio</span>
+                </div>
+            </a>
+
+            <div class="nav-menu">
+                <div class="nav-item">
+                    Genomics
+                    <div class="dropdown">
+                        <a class="dropdown-item" href="{{ url_for('search_cold_bp.index') }}">
+                            <span class="icon">🧬</span> Show Genomics
+                        </a>
+                        <a class="dropdown-item" href="{{ url_for('search_cold_bp.index') }}">
+                            <span class="icon">🔎</span> ID Search
+                        </a>
+                        <a class="dropdown-item" href="{{ url_for('search_cold_bp.index') }}">
+                            <span class="icon">🔎</span> Keyword Search
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Transcriptomics导航项 -->
+                <div class="nav-item">
+                    <a href="{{ url_for('transcriptomics_tool_bp.index') }}" style="text-decoration: none; color: inherit;">Transcriptomics</a>
+                    <div class="dropdown">
+                        <div class="dropdown-item has-submenu">
+                            <span class="icon">🌟</span> Abiotic stress（非生物胁迫）
+                            <span style="float: right;">→</span>
+                            <div class="sub-dropdown">
+                                <div class="sub-dropdown-item has-thirdmenu">
+                                    <a class="third-dropdown-item" href="{{ url_for('transcriptomics_cold_tool_bp.index') }}">
+                                    <span class="icon">❄️</span> 冷处理
+                                    <span style="float: right;">→</span>
+                                    <div class="third-dropdown">
+                                        <a class="third-dropdown-item" href="{{ url_for('search_cold_nac_m4_3h_bp.index') }}">
+                                            <span class="icon">⏱️</span> Cold_NAC_M4_3h
+                                        </a>
+                                        <a class="third-dropdown-item" href="{{ url_for('search_cold_ac_candol_m4_2h_bp.index') }}">
+                                            <span class="icon">⏱️</span> Cold_AC_candol_M4_2h
+                                        </a>
+                                        <a class="third-dropdown-item" href="{{ url_for('search_cold_ac_m3_bp.index') }}">
+                                            <span class="icon">⏱️</span> Cold_AC_M3
+                                        </a>
+                                        <a class="third-dropdown-item" href="{{ url_for('search_cold_ac_m4_2h_bp.index') }}">
+                                            <span class="icon">⏱️</span> Cold_AC_M4_2h
+                                        </a>
+                                        <a class="third-dropdown-item" href="{{ url_for('search_multiple_treatments_bp.index') }}">
+                                            <span class="icon">⏱️</span> Multiple treatments
+                                        </a>
+                                    </div>
+                                </div>
+                                <div class="sub-dropdown-item has-thirdmenu">
+                                    <span class="icon">🔥</span> 热处理
+                                    <span style="float: right;">→</span>
+                                    <div class="third-dropdown">
+<!--                                        <a class="third-dropdown-item" href="{{ url_for('search_cold_bp.index') }}">-->
+<!--                                            <span class="icon">⏱️</span> Cold_NAC_M4_3h-->
+<!--                                        </a>-->
+<!--                                        <a class="third-dropdown-item" href="{{ url_for('search_cold_ac_candol_m4_2h_bp.index') }}">-->
+<!--                                            <span class="icon">⏱️</span> Cold_AC_candol_M4_2h-->
+<!--                                        </a>-->
+<!--                                        <a class="third-dropdown-item" href="{{ url_for('search_cold_ac_m3_bp.index') }}">-->
+<!--                                            <span class="icon">⏱️</span> Cold_AC_M3-->
+<!--                                        </a>-->
+<!--                                        <a class="third-dropdown-item" href="{{ url_for('search_cold_ac_m4_2h_bp.index') }}">-->
+<!--                                            <span class="icon">⏱️</span> Cold_AC_M4_2h-->
+<!--                                        </a>-->
+                                        <a class="third-dropdown-item" href="{{ url_for('search_multiple_treatments_bp.index') }}">
+                                            <span class="icon">⏱️</span> Multiple treatments
+                                        </a>
+                                    </div>
+                                </div>
+                                <div class="sub-dropdown-item has-thirdmenu">
+                                    <span class="icon">🧂</span> 盐处理
+                                    <span style="float: right;">→</span>
+                                    <div class="third-dropdown">
+<!--                                        <a class="third-dropdown-item" href="{{ url_for('search_cold_bp.index') }}">-->
+<!--                                            <span class="icon">⏱️</span> Cold_NAC_M4_3h-->
+<!--                                        </a>-->
+<!--                                        <a class="third-dropdown-item" href="{{ url_for('search_cold_ac_candol_m4_2h_bp.index') }}">-->
+<!--                                            <span class="icon">⏱️</span> Cold_AC_candol_M4_2h-->
+<!--                                        </a>-->
+<!--                                        <a class="third-dropdown-item" href="{{ url_for('search_cold_ac_m3_bp.index') }}">-->
+<!--                                            <span class="icon">⏱️</span> Cold_AC_M3-->
+<!--                                        </a>-->
+<!--                                        <a class="third-dropdown-item" href="{{ url_for('search_cold_ac_m4_2h_bp.index') }}">-->
+<!--                                            <span class="icon">⏱️</span> Cold_AC_M4_2h-->
+<!--                                        </a>-->
+                                        <a class="third-dropdown-item" href="{{ url_for('search_multiple_treatments_bp.index') }}">
+                                            <span class="icon">⏱️</span> Multiple treatments
+                                        </a>
+                                    </div>
+                                </div>
+                                <div class="sub-dropdown-item has-thirdmenu">
+                                    <span class="icon">🏜️</span> 干旱处理
+                                    <span style="float: right;">→</span>
+                                    <div class="third-dropdown">
+<!--                                        <a class="third-dropdown-item" href="{{ url_for('search_cold_bp.index') }}">-->
+<!--                                            <span class="icon">⏱️</span> Cold_NAC_M4_3h-->
+<!--                                        </a>-->
+<!--                                        <a class="third-dropdown-item" href="{{ url_for('search_cold_ac_candol_m4_2h_bp.index') }}">-->
+<!--                                            <span class="icon">⏱️</span> Cold_AC_candol_M4_2h-->
+<!--                                        </a>-->
+<!--                                        <a class="third-dropdown-item" href="{{ url_for('search_cold_ac_m3_bp.index') }}">-->
+<!--                                            <span class="icon">⏱️</span> Cold_AC_M3-->
+<!--                                        </a>-->
+<!--                                        <a class="third-dropdown-item" href="{{ url_for('search_cold_ac_m4_2h_bp.index') }}">-->
+<!--                                            <span class="icon">⏱️</span> Cold_AC_M4_2h-->
+<!--                                        </a>-->
+                                        <a class="third-dropdown-item" href="{{ url_for('search_multiple_treatments_bp.index') }}">
+                                            <span class="icon">⏱️</span> Multiple treatments
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="dropdown-item has-submenu">
+                            <span class="icon">🦗</span> Biotic stress（生物胁迫）
+                            <span style="float: right;">→</span>
+                            <div class="sub-dropdown">
+                                <div class="sub-dropdown-item has-thirdmenu">
+                                    <span class="icon">🌱🥀</span> 青枯病
+                                    <span style="float: right;">→</span>
+                                    <div class="third-dropdown">
+                                        <a class="third-dropdown-item" href="{{ url_for('search_Bacterial_wilt_bp.index') }}">
+                                            <span class="icon">⏱️</span> search_bacterial_wilt
+                                        </a>
+<!--                                        <a class="third-dropdown-item" href="{{ url_for('search_cold_bp.index') }}">-->
+<!--                                            <span class="icon">⏱️</span> Cold_AC_candol_M4_2h-->
+<!--                                        </a>-->
+<!--                                        <a class="third-dropdown-item" href="{{ url_for('search_cold_bp.index') }}">-->
+<!--                                            <span class="icon">⏱️</span> Cold_AC_M3-->
+<!--                                        </a>-->
+<!--                                        <a class="third-dropdown-item" href="{{ url_for('search_cold_bp.index') }}">-->
+<!--                                            <span class="icon">⏱️</span> Cold_AC_M4_2h-->
+<!--                                        </a>-->
+<!--                                        <a class="third-dropdown-item" href="{{ url_for('search_cold_bp.index') }}">-->
+<!--                                            <span class="icon">⏱️</span> Multiple treatments-->
+<!--                                        </a>-->
+                                    </div>
+                                </div>
+<!--                                <div class="sub-dropdown-item has-thirdmenu">-->
+<!--                                    <span class="icon">🔥</span> 热处理-->
+<!--                                    <span style="float: right;">→</span>-->
+<!--                                    <div class="third-dropdown">-->
+<!--                                        <a class="third-dropdown-item" href="{{ url_for('search_cold_bp.index') }}">-->
+<!--                                            <span class="icon">⏱️</span> Cold_NAC_M4_3h-->
+<!--                                        </a>-->
+<!--                                        <a class="third-dropdown-item" href="{{ url_for('search_cold_bp.index') }}">-->
+<!--                                            <span class="icon">⏱️</span> Cold_AC_candol_M4_2h-->
+<!--                                        </a>-->
+<!--                                        <a class="third-dropdown-item" href="{{ url_for('search_cold_bp.index') }}">-->
+<!--                                            <span class="icon">⏱️</span> Cold_AC_M3-->
+<!--                                        </a>-->
+<!--                                        <a class="third-dropdown-item" href="{{ url_for('search_cold_bp.index') }}">-->
+<!--                                            <span class="icon">⏱️</span> Cold_AC_M4_2h-->
+<!--                                        </a>-->
+<!--                                        <a class="third-dropdown-item" href="{{ url_for('search_cold_bp.index') }}">-->
+<!--                                            <span class="icon">⏱️</span> Multiple treatments-->
+<!--                                        </a>-->
+<!--                                    </div>-->
+<!--                                </div>-->
+<!--                                <div class="sub-dropdown-item has-thirdmenu">-->
+<!--                                    <span class="icon">🧂</span> 盐处理-->
+<!--                                    <span style="float: right;">→</span>-->
+<!--                                    <div class="third-dropdown">-->
+<!--                                        <a class="third-dropdown-item" href="{{ url_for('search_cold_bp.index') }}">-->
+<!--                                            <span class="icon">⏱️</span> Cold_NAC_M4_3h-->
+<!--                                        </a>-->
+<!--                                        <a class="third-dropdown-item" href="{{ url_for('search_cold_bp.index') }}">-->
+<!--                                            <span class="icon">⏱️</span> Cold_AC_candol_M4_2h-->
+<!--                                        </a>-->
+<!--                                        <a class="third-dropdown-item" href="{{ url_for('search_cold_bp.index') }}">-->
+<!--                                            <span class="icon">⏱️</span> Cold_AC_M3-->
+<!--                                        </a>-->
+<!--                                        <a class="third-dropdown-item" href="{{ url_for('search_cold_bp.index') }}">-->
+<!--                                            <span class="icon">⏱️</span> Cold_AC_M4_2h-->
+<!--                                        </a>-->
+<!--                                        <a class="third-dropdown-item" href="{{ url_for('search_cold_bp.index') }}">-->
+<!--                                            <span class="icon">⏱️</span> Multiple treatments-->
+<!--                                        </a>-->
+<!--                                    </div>-->
+<!--                                </div>-->
+<!--                                <div class="sub-dropdown-item has-thirdmenu">-->
+<!--                                    <span class="icon">🏜️</span> 干旱处理-->
+<!--                                    <span style="float: right;">→</span>-->
+<!--                                    <div class="third-dropdown">-->
+<!--                                        <a class="third-dropdown-item" href="{{ url_for('search_cold_bp.index') }}">-->
+<!--                                            <span class="icon">⏱️</span> Cold_NAC_M4_3h-->
+<!--                                        </a>-->
+<!--                                        <a class="third-dropdown-item" href="{{ url_for('search_cold_bp.index') }}">-->
+<!--                                            <span class="icon">⏱️</span> Cold_AC_candol_M4_2h-->
+<!--                                        </a>-->
+<!--                                        <a class="third-dropdown-item" href="{{ url_for('search_cold_bp.index') }}">-->
+<!--                                            <span class="icon">⏱️</span> Cold_AC_M3-->
+<!--                                        </a>-->
+<!--                                        <a class="third-dropdown-item" href="{{ url_for('search_cold_bp.index') }}">-->
+<!--                                            <span class="icon">⏱️</span> Cold_AC_M4_2h-->
+<!--                                        </a>-->
+<!--                                        <a class="third-dropdown-item" href="{{ url_for('search_cold_bp.index') }}">-->
+<!--                                            <span class="icon">⏱️</span> Multiple treatments-->
+<!--                                        </a>-->
+<!--                                    </div>-->
+<!--                                </div>-->
+                            </div>
+                        </div>
+<!--                        <a class="dropdown-item" href="{{ url_for('search_transcriptomics_bp.index') }}">-->
+<!--                            <span class="icon">🔎</span> ID Search-->
+<!--                        </a>-->
+                        <a class="dropdown-item" href="{{ url_for('search_tuber_development_bp.index') }}">
+                            <span class="icon">🥔</span> other
+                        </a>
+                    </div>
+                </div>
+
+                <div class="nav-item">
+                    Protein
+                </div>
+                <div class="nav-item">
+                    Metabolome
+                </div>
+
+                <div class="nav-item">
+                    Tools
+                </div>
+
+                <div class="nav-item">
+                    Downloads
+                    <div class="dropdown">
+                        <a class="dropdown-item" href="{{ url_for('files_bp.list_files') }}">
+                            <span class="icon">📁</span> Download
+                        </a>
+                    </div>
+                </div>
+
+                <div class="nav-item">
+                     Related Links
+                    <div class="dropdown">
+                        <a class="dropdown-item" href="{{ url_for('files_bp.list_files') }}">
+                            <span class="icon">🔗</span> Download
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 子模板内容填充区 -->
+    <div class="content-container">
+        {% block content %}{% endblock %}
+    </div>
+
+    <!-- 脚本区域 -->
+    <script>
+        // 导航菜单交互逻辑
+        document.querySelectorAll('.nav-item').forEach(item => {
+            item.addEventListener('click', function() {
+                document.querySelectorAll('.nav-item').forEach(nav => {
+                    nav.classList.remove('active');
+                });
+                this.classList.add('active');
+            });
+        });
+
+        document.querySelectorAll('.dropdown-item, .sub-dropdown-item').forEach(item => {
+            item.addEventListener('click', function(e) {
+                const parentNav = this.closest('.nav-item');
+                document.querySelectorAll('.nav-item').forEach(nav => {
+                    nav.classList.remove('active');
+                });
+                parentNav.classList.add('active');
+            });
+        });
+
+        // 子模板脚本插入点
+        {% block scripts %}{% endblock %}
+    </script>
+</body>
+</html>

@@ -1,0 +1,82 @@
+{% extends "test.html" %}
+
+{% block title %}转录组基因查询{% endblock %}
+
+{% block content %}
+<div class="search-section">
+    <h2>转录组参考基因ID查询</h2>
+    <!-- 表单提交到当前蓝图的index视图 -->
+    <form method="get" action="{{ url_for('search_transcriptomics_bp.index') }}">
+        <div class="form-group">
+            <input type="text"
+                   name="ref_id"
+                   placeholder="请输入参考基因ID（例如：SverC01G000010.1）"
+                   value="{{ ref_id if ref_id else '' }}"
+                   required>
+            <button type="submit">查询</button>
+        </div>
+    </form>
+</div>
+
+{% if results %}
+<!-- 显示查询结果 -->
+<div class="results-section">
+    <h3>查询结果：{{ ref_id }}</h3>
+    <p class="result-info" style="color: #666; margin: 10px 0;">
+        数据来源：
+        <span style="background: #f0f8ff; padding: 3px 8px; border-radius: 4px;">{{ table1 }}</span> 和
+        <span style="background: #f0f8ff; padding: 3px 8px; border-radius: 4px;">{{ table2 }}</span>
+    </p>
+
+    <div class="table-wrapper">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>参考基因ID</th>
+                    <th>对比基因ID</th>
+                    <th>比对率</th>
+                    <th>e-value值</th>
+                    <th>来源表</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in results %}
+                <tr>
+                    <td>{{ row.Reference_genome_ID }}</td>  <!-- 与数据库字段名一致 -->
+                    <td>{{ row.Comparative_genomics_ID }}</td>  <!-- 与数据库字段名一致 -->
+                    <td>{{ row.Contrast_ratio }}</td>  <!-- 与数据库字段名一致 -->
+                    <td>{{ row.e_value }}</td>  <!-- 与数据库字段名一致 -->
+                    <td>{{ row.source_table }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    <p class="result-count" style="margin-top: 10px; color: #666;">
+        共找到 {{ results|length }} 条记录
+    </p>
+</div>
+{% elif ref_id %}
+<!-- 无结果提示 -->
+<div class="empty">
+    未找到参考基因ID为 "{{ ref_id }}" 的数据，请尝试其他ID
+</div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+// 自动聚焦到搜索框
+document.querySelector('input[name="ref_id"]').focus();
+
+// 表格行悬停效果
+document.querySelectorAll('.data-table tbody tr').forEach(row => {
+    row.addEventListener('mouseover', () => {
+        row.style.backgroundColor = '#f5f7fa';
+    });
+    row.addEventListener('mouseout', () => {
+        row.style.backgroundColor = '';
+    });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,188 @@
+{% extends "test.html" %}
+
+{% block content %}
+<!-- 页面标题区域 -->
+<div class="bg-gradient-to-r from-green-600 to-teal-500 text-white py-12 px-4 md:px-8">
+    <div class="max-w-7xl mx-auto">
+        <h1 class="text-3xl md:text-4xl font-bold mb-2">Transcriptomics Cold Tools</h1>
+        <p class="text-lg opacity-90">Comprehensive analysis tools for gene expression data</p>
+    </div>
+</div>
+
+<!-- 主要内容区域 -->
+<div class="max-w-7xl mx-auto px-4 py-10">
+    <!-- 数据库transcriptomics_tool内容表格 -->
+    <section class="mb-12">
+        <h2 class="text-2xl font-bold text-gray-800 mb-2 flex items-center">
+            <i class="fas fa-database mr-3 text-green-600"></i>Transcriptomics Tool Database
+        </h2>
+        <p class="text-sm text-gray-500 mb-6">共查询到 {{ tool_data|length }} 条工具数据</p>
+
+        <div class="overflow-x-auto bg-white rounded-xl shadow-md border border-gray-100">
+            <table class="overflow-x-auto">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">处理</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">材料</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">组织部位</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">处理条件</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">备注</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    {% if tool_data %}
+                        {% for tool in tool_data %}
+                            <tr class="hover:bg-gray-50 transition-colors duration-150">
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ tool.处理 }}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ tool.材料 }}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ tool.组织部位 }}</td>
+                                <td class="px-6 py-4 text-sm text-gray-900">{{ tool.处理条件 }}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ tool.备注 }}</td>
+                            </tr>
+                        {% endfor %}
+                    {% else %}
+                        <tr>
+                            <td colspan="5" class="px-6 py-8 text-center text-sm text-gray-500">
+                                No data found in transcriptomics_tool database
+                            </td>
+                        </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <!-- 左右分栏功能卡片 -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <!-- 左侧：非生物胁迫工具卡片 -->
+        <div class="space-y-8">
+            <div class="flex items-center mb-4">
+                <div class="w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center mr-3">
+                    <i class="fas fa-bolt text-amber-600 text-xl"></i>
+                </div>
+                <h2 class="text-2xl font-bold text-gray-800">Abiotic Stress</h2>
+            </div>
+
+            <!-- 冷处理卡片 -->
+            <div class="bg-white rounded-xl shadow-md overflow-hidden border border-gray-100 transform transition-all duration-300 hover:shadow-lg">
+                <div class="bg-blue-50 px-6 py-4 border-b border-blue-100">
+                    <h3 class="text-xl font-semibold flex items-center text-gray-800">
+                        <span class="icon mr-2">❄️</span> 冷处理分析工具
+                    </h3>
+                </div>
+                <div class="p-5">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <a href="{{ url_for('search_cold_bp.index') }}" class="p-3 rounded-lg border border-blue-100 hover:bg-blue-50 transition-colors flex items-center">
+                            <span class="icon mr-2">⏱️</span>
+                            <span class="text-sm">Cold_NAC_M4_3h</span>
+                        </a>
+                        <a href="{{ url_for('search_cold_ac_candol_m4_2h_bp.index') }}" class="p-3 rounded-lg border border-blue-100 hover:bg-blue-50 transition-colors flex items-center">
+                            <span class="icon mr-2">⏱️</span>
+                            <span class="text-sm">Cold_AC_candol_M4_2h</span>
+                        </a>
+                        <a href="{{ url_for('search_cold_ac_m3_bp.index') }}" class="p-3 rounded-lg border border-blue-100 hover:bg-blue-50 transition-colors flex items-center">
+                            <span class="icon mr-2">⏱️</span>
+                            <span class="text-sm">Cold_AC_M3</span>
+                        </a>
+                        <a href="{{ url_for('search_cold_ac_m4_2h_bp.index') }}" class="p-3 rounded-lg border border-blue-100 hover:bg-blue-50 transition-colors flex items-center">
+                            <span class="icon mr-2">⏱️</span>
+                            <span class="text-sm">Cold_AC_M4_2h</span>
+                        </a>
+                        <a href="{{ url_for('search_multiple_treatments_bp.index') }}" class="p-3 rounded-lg border border-blue-100 hover:bg-blue-50 transition-colors flex items-center sm:col-span-2">
+                            <span class="icon mr-2">⏱️</span>
+                            <span class="text-sm">Multiple treatments</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.icon {
+    display: inline-block;
+    width: 24px;
+    text-align: center;
+}
+
+/* 链接样式 */
+.grid a {
+    text-decoration: none;
+    color: inherit;
+}
+
+.grid a:hover {
+    text-decoration: none;
+}
+
+.grid a:hover span:last-child {
+    color: #1e40af;
+    font-weight: 500;
+}
+
+/* 表格样式补充 */
+.overflow-x-auto {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+.overflow-x-auto::-webkit-scrollbar {
+    display: none;
+}
+
+/* 响应式调整 */
+@media (max-width: 1024px) {
+    .lg\:grid-cols-2 {
+        grid-template-columns: 1fr;
+    }
+}
+@media (max-width: 640px) {
+    .table th, .table td {
+        padding: 4px 8px;
+        font-size: 12px;
+    }
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// 添加卡片交互动画
+document.addEventListener('DOMContentLoaded', function() {
+    // 卡片悬停效果增强
+    const cards = document.querySelectorAll('.bg-white.rounded-xl');
+    cards.forEach(card => {
+        card.addEventListener('mouseenter', function() {
+            this.classList.add('translate-y-[-5px]');
+        });
+        card.addEventListener('mouseleave', function() {
+            this.classList.remove('translate-y-[-5px]');
+        });
+    });
+
+    // 工具项点击反馈
+    const toolItems = document.querySelectorAll('.grid a');
+    toolItems.forEach(item => {
+        item.addEventListener('click', function(e) {
+            this.classList.add('opacity-70');
+            setTimeout(() => {
+                this.classList.remove('opacity-70');
+            }, 200);
+        });
+    });
+
+    // 表格行悬停效果
+    const tableRows = document.querySelectorAll('tbody tr');
+    tableRows.forEach(row => {
+        row.addEventListener('mouseenter', function() {
+            this.classList.add('bg-gray-50');
+        });
+        row.addEventListener('mouseleave', function() {
+            this.classList.remove('bg-gray-50');
+        });
+    });
+});
+</script>
+{% endblock %}
