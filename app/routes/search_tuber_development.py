@@ -65,7 +65,7 @@ def create_line_chart(results):
 
             if numeric_keys:
                 line = (
-                    Line(init_opts=opts.InitOpts(width="3000px", height="400px"))
+                    Line(init_opts=opts.InitOpts(width="2000px", height="400px"))
                     .add_xaxis(numeric_keys)
                     .add_yaxis("数据值", numeric_values)
                     .set_global_opts(
@@ -78,6 +78,11 @@ def create_line_chart(results):
                         yaxis_opts=opts.AxisOpts(name="数值"),
                     )
                 )
+
+                try:
+                    line.options["grid"] = {"left": "2%", "right": "2%", "top": "15%", "bottom": "18%"}
+                except Exception:
+                    pass
                 return line.render_embed()
     except Exception as e:
         current_app.logger.error(f"生成折线图失败: {str(e)}")
@@ -113,7 +118,7 @@ def create_heatmap(results):
                             heatmap_data.append([x, y, 0])
 
                 heatmap = (
-                    HeatMap(init_opts=opts.InitOpts(width="3000px", height="200px"))
+                    HeatMap(init_opts=opts.InitOpts(width="2000px", height="400px"))
                     .add_xaxis(numeric_keys)
                     .add_yaxis(
                         "数据行",
@@ -146,6 +151,11 @@ def create_heatmap(results):
                         ),
                     )
                 )
+
+                try:
+                    heatmap.options["grid"] = {"left": "5%", "right": "5%", "top": "15%", "bottom": "18%"}
+                except Exception:
+                    pass
                 return heatmap.render_embed()
     except Exception as e:
         current_app.logger.error(f"生成热力图失败: {str(e)}")

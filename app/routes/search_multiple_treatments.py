@@ -67,7 +67,7 @@ def create_line_chart(results):
             if numeric_keys:
                 # 固定宽度为2000px，确保超过容器宽度
                 line = (
-                    Line(init_opts=opts.InitOpts(width="7000px", height="400px"))
+                    Line(init_opts=opts.InitOpts(width="1000px", height="400px"))
                     .add_xaxis(numeric_keys)
                     .add_yaxis("数据值", numeric_values)
                     .set_global_opts(
@@ -128,7 +128,7 @@ def create_heatmap(results):
 
                 # 固定宽度为2000px，确保超过容器宽度
                 heatmap = (
-                    HeatMap(init_opts=opts.InitOpts(width="7000px", height="400px"))
+                    HeatMap(init_opts=opts.InitOpts(width="1000px", height="400px"))
                     .add_xaxis(numeric_keys)
                     .add_yaxis(
                         "数据行",

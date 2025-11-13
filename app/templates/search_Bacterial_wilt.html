@@ -41,6 +41,7 @@
         box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
         border-radius: 6px;
         padding: 10px;
+
     }
 
     /* 表格样式 */
@@ -69,20 +70,22 @@
     .chart-scroll-wrapper {
         overflow-x: auto !important;  /* 强制横向滚动 */
         overflow-y: hidden !important;
-        margin: 20px 0;
-        padding: 10px;
+        margin: 0 !important;  /* 消除内边距  20px 0 */
+        padding: 0 !important;  /* 消除内边距  10px */
         box-sizing: border-box;
         box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
         border-radius: 6px;
-        padding-left: 5px !important;  /* 减少左侧内边距 */
-        padding-right: 5px !important;
+        min-height: 420px;
+
     }
 
     /* 图表内容容器 - 确保宽度超过页面 */
     .chart-wrapper {
         min-width: 1500px !important;  /* 强制超过页面宽度触发滚动 */
-        width: auto;
-        margin-left: 0 !important;
+        width: 100%;
+        display: inline-block;
+        margin: 0 !important; /* 新增：移除容器自身的外边距 */
+        padding: 0 !important; /* 新增：移除容器自身的内边距 */
     }
 
     /* ECharts图表容器 */
@@ -90,6 +93,18 @@
         width: 100%;
         min-width: 1500px !important;  /* 与外层容器匹配 */
         height: 400px;
+        margin: 0 !important; /* 新增：移除容器自身的外边距 */
+        padding: 0 !important; /* 新增：移除容器自身的内边距 */
+    }
+
+    /* 额外添加：检查并清除父元素可能的空白 */
+    .content-container {
+        font-size: 0; /* 临时测试：消除 inline-block 元素间的空白字符影响 */
+    }
+
+    /* 恢复子元素字体大小，避免继承父元素的0 */
+    .content-container > * {
+        font-size: 16px;
     }
 
     /* 解除ECharts内部宽度限制 */
@@ -189,7 +204,7 @@
 {% if chart_code %}
     <div class="chart-scroll-wrapper">
         <div class="chart-wrapper">
-            <h3>数据折线图</h3>
+            <h3></h3>
             <div class="chart-container" data-echarts-instance>
                 {{ chart_code|safe }}
             </div>
@@ -201,7 +216,7 @@
 {% if heatmap_code %}
     <div class="chart-scroll-wrapper">
         <div class="chart-wrapper">
-            <h3>数据热力图</h3>
+            <h3></h3>
             <div class="chart-container" data-echarts-instance>
                 {{ heatmap_code|safe }}
             </div>

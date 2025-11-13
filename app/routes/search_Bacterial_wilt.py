@@ -37,15 +37,60 @@ from flask import Blueprint, render_template, request, current_app
 from ..db import query_one_table
 from pyecharts.charts import Line, HeatMap
 from pyecharts import options as opts
+from pyecharts.commons.utils import JsCode
 
-# 调整JsCode的导入路径，兼容旧版本pyecharts
-try:
-    from pyecharts import JsCode  # 适用于较新版本
-except ImportError:
-    from pyecharts.commons.utils import JsCode  # 适用于旧版本
-from pyecharts.options import AxisTickOpts
-from pyecharts import options as opts
+
 search_Bacterial_wilt_bp = Blueprint("search_Bacterial_wilt_bp", __name__)
+
+
+# def create_line_chart(results):
+#     try:
+#         if results and len(results) > 0 and len(results[0][1]) > 0:
+#             data_list = results[0][1][0]
+#             keys = list(data_list.keys())
+#             values = list(data_list.values())
+#
+#             numeric_keys = []
+#             numeric_values = []
+#             for k, v in zip(keys, values):
+#                 try:
+#                     numeric_values.append(float(v))
+#                     numeric_keys.append(k)
+#                 except (ValueError, TypeError):
+#                     continue
+#
+#             if numeric_keys:
+#                 # 最简版本，先不设置网格
+#                 line = (
+#                     Line(init_opts=opts.InitOpts(width="7000px", height="400px"))
+#                     .add_xaxis(numeric_keys)
+#                     .add_yaxis("数据值", numeric_values)
+#                     .set_global_opts(
+#                         title_opts=opts.TitleOpts(title="数据折线图"),
+#                         tooltip_opts=opts.TooltipOpts(trigger="axis"),
+#
+#                         xaxis_opts=opts.AxisOpts(
+#                             boundary_gap=False,  # 关闭左右留白
+#                             interval=0,
+#                             axislabel_opts=opts.LabelOpts(
+#                                 font_size=10,
+#                                 margin=15
+#                             ),
+#                             axistick_opts=opts.AxisTickOpts(
+#                                 length=8,
+#                                 is_align_with_label=True
+#                             ),
+#                             name="属性",
+#                             name_location="middle",
+#                             name_gap=30
+#                         ),
+#                         yaxis_opts=opts.AxisOpts(name="数值"),
+#                     )
+#                 )
+#                 return line.render_embed()
+#     except Exception as e:
+#         current_app.logger.error(f"生成折线图失败: {str(e)}")
+#     return None
 
 
 def create_line_chart(results):
@@ -60,43 +105,51 @@ def create_line_chart(results):
             for k, v in zip(keys, values):
                 try:
                     numeric_values.append(float(v))
-                    numeric_keys.append(k)
+                    numeric_keys.append(str(k))
                 except (ValueError, TypeError):
                     continue
 
-            if numeric_keys:
-                # 固定宽度为2000px，确保超过容器宽度
-                line = (
-                    Line(init_opts=opts.InitOpts(width="7000px", height="400px"))
-                    .add_xaxis(numeric_keys)
-                    .add_yaxis("数据值", numeric_values)
-                    .set_global_opts(
-                        title_opts=opts.TitleOpts(title="数据折线图"),
-                        tooltip_opts=opts.TooltipOpts(trigger="axis"),
-                        xaxis_opts=opts.AxisOpts(
-                            interval=0,
+            if not numeric_keys:
+                return None
 
-                            axislabel_opts=opts.LabelOpts(
-                                font_size=10,
-                                # rotate=-45,  # 标签旋转减少重叠
-                                margin=15
-                            ),
-                            axistick_opts=opts.AxisTickOpts(
-                                length=8 , # 刻度线长度，可调整为 10、12 等
-                                is_align_with_label=True
-                            ),
-                            # boundary_gap=False,
-                            name="属性",
-                            name_location="middle",
-                            name_gap=30
-                        ),
-                        yaxis_opts=opts.AxisOpts(name="数值"),
-                    )
+            line = (
+                Line(init_opts=opts.InitOpts(width="7000px", height="400px"))
+                .add_xaxis(numeric_keys)
+                .add_yaxis("数据值", numeric_values)
+                .set_global_opts(
+                    title_opts=opts.TitleOpts(title="数据折线图"),
+                    tooltip_opts=opts.TooltipOpts(trigger="axis"),
+                    xaxis_opts=opts.AxisOpts(
+                        interval=0,
+                        axislabel_opts=opts.LabelOpts(font_size=10, margin=15),
+                        axistick_opts=opts.AxisTickOpts(length=8, is_align_with_label=True),
+                        name="属性",
+                        name_location="middle",
+                        name_gap=30,
+                        boundary_gap=False,
+                    ),
+                    yaxis_opts=opts.AxisOpts(name="数值"),
+                    # datazoom_opts=[
+                    #     opts.DataZoomOpts(type_="slider", range_start=0, range_end=100),
+                    #     #opts.DataZoomOpts(type_="inside", range_start=0, range_end=100),
+                    # ],
                 )
-                return line.render_embed()
+            )
+
+            # 轻量优化：收紧边距，兼容 pyecharts 2.0.9（不使用 grid_opts 参数）
+            try:
+                line.options["grid"] = {"left": "2%", "right": "2%", "top": "12%", "bottom": "18%"}
+            except Exception:
+                pass
+
+            return line.render_embed()
     except Exception as e:
-        current_app.logger.error(f"生成折线图失败: {str(e)}")
+        try:
+            current_app.logger.error(f"生成折线图失败: {str(e)}")
+        except Exception:
+            pass
     return None
+
 
 
 def create_heatmap(results):
@@ -163,6 +216,11 @@ def create_heatmap(results):
                         ),
                     )
                 )
+
+                try:
+                    heatmap.options["grid"] = {"left": "2%", "right": "2%", "top": "20%", "bottom": "18%"}
+                except Exception:
+                    pass
                 return heatmap.render_embed()
     except Exception as e:
         current_app.logger.error(f"生成热力图失败: {str(e)}")
