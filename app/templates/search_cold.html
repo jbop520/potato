@@ -130,14 +130,14 @@
 
   <!-- 查询表单 -->
   <form method="get" action="{{ url_for('search_cold_bp.index') }}">
-    <input name="q" type="text" placeholder="输入 c804.names 或 c882.Transcript_ID" value="{{ q|e }}" autofocus />
-    <button type="submit">查询</button>
+    <input name="q" type="text" placeholder="Enter Transcript_ID to search" value="{{ q|e }}" autofocus />
+    <button type="submit">Search</button>
   </form>
 
   <!-- 显示关联基因及按钮（支持多个关联基因） -->
 {% if q %}
   <div class="associate-container">
-    <span class="associate-label">关联基因：</span>
+    <span class="associate-label">Related Gene：</span>
     {% if associated_genes and associated_genes|length > 0 %}
       <!-- 循环生成每个关联基因的按钮和表单 -->
       {% for gene in associated_genes %}
@@ -234,7 +234,7 @@
   {% endif %}
 
   <!-- 提示信息 -->
-  <div class="empty">提示：若你的表名不是 {{ tbl804 if tbl804 is defined else '' }} / {{ tbl882 if tbl882 is defined else '' }}，请在 <code>app/config.py</code> 修改。</div>
+<!--  <div class="empty">提示：若你的表名不是 {{ tbl804 if tbl804 is defined else '' }} / {{ tbl882 if tbl882 is defined else '' }}，请在 <code>app/config.py</code> 修改。</div>-->
 
   <!-- 关联基因按钮点击事件 -->
   <script>

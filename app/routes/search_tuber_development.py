@@ -67,15 +67,15 @@ def create_line_chart(results):
                 line = (
                     Line(init_opts=opts.InitOpts(width="2000px", height="400px"))
                     .add_xaxis(numeric_keys)
-                    .add_yaxis("数据值", numeric_values)
+                    .add_yaxis("", numeric_values)
                     .set_global_opts(
-                        title_opts=opts.TitleOpts(title="数据折线图"),
+                        title_opts=opts.TitleOpts(title="Line Graph"),
                         tooltip_opts=opts.TooltipOpts(trigger="axis"),
                         xaxis_opts=opts.AxisOpts(
                             interval=0,
                             axislabel_opts=opts.LabelOpts(font_size=10),
-                            name="属性"),
-                        yaxis_opts=opts.AxisOpts(name="数值"),
+                            name=""),
+                        yaxis_opts=opts.AxisOpts(name=""),
                     )
                 )
 
@@ -121,8 +121,8 @@ def create_heatmap(results):
                     HeatMap(init_opts=opts.InitOpts(width="2000px", height="400px"))
                     .add_xaxis(numeric_keys)
                     .add_yaxis(
-                        "数据行",
-                        [f"记录 {i + 1}" for i in range(len(data_rows))],
+                        "",
+                        [],
                         heatmap_data,
                         label_opts=opts.LabelOpts(
                             is_show=True,
@@ -131,7 +131,7 @@ def create_heatmap(results):
                     )
                     .set_global_opts(
 
-                        title_opts=opts.TitleOpts(title="数据热力图"),
+                        title_opts=opts.TitleOpts(title="Heatmap"),
                         visualmap_opts=opts.VisualMapOpts(),
                         xaxis_opts=opts.AxisOpts(
 
@@ -143,11 +143,11 @@ def create_heatmap(results):
                                 ),
 
 
-                            name="属性"
+                            name=""
                         ),
                         yaxis_opts=opts.AxisOpts(
                             type_="category",
-                            name="数据记录"
+                            name=""
                         ),
                     )
                 )

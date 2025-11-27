@@ -131,14 +131,14 @@
 
 <!-- 查询表单 -->
 <form method="get" action="{{ url_for('search_cold_nac_m4_3h_bp.index') }}">
-    <input name="q" type="text" placeholder="输入 Transcript_ID 进行查询" value="{{ q|e }}" autofocus />
-    <button type="submit">查询</button>
+    <input name="q" type="text" placeholder="Enter Transcript_ID to search" value="{{ q|e }}" autofocus />
+    <button type="submit">Search</button>
 </form>
 
 <!-- 关联基因按钮区域 -->
 {% if q %}
     <div class="associate-container">
-        <span class="associate-label">关联基因：</span>
+        <span class="associate-label">Related Gene：</span>
         {% if associated_genes and associated_genes|length > 0 %}
             {% for gene in associated_genes %}
                 <form id="associateForm_{{ loop.index }}" method="get" action="{{ url_for('search_cold_nac_m4_3h_bp.index') }}" style="display: inline;">
@@ -241,5 +241,5 @@
     }
 </script>
 
-<div class="empty">提示：若表名不符，请在 <code>app/config.py</code> 中修改 COLD_NAC_M4_3H_REF_* 相关配置。</div>
+<!--<div class="empty">提示：若表名不符，请在 <code>app/config.py</code> 中修改 COLD_NAC_M4_3H_REF_* 相关配置。</div>-->
 {% endblock %}
