@@ -207,7 +207,16 @@ def index():
     results = []
     chart_code = None
     heatmap_code = None
+    transcriptomics_results = []
     cfg = current_app.config
+
+    transcript_rows = query_one_table(
+        cfg["TRANSCRIPTOMICS_TOOL"],  # 需在config.py中配置表名
+        "处理",  # 实际存储胁迫类型的字段名（根据表结构调整）
+        "Cold_AC_M3"  # 固定搜索关键词
+    )
+    if transcript_rows:
+        transcriptomics_results.append(("Transcriptomics Tool Data", transcript_rows))
 
     if q:
         rows_c804 = query_one_table(cfg["COLD_AC_M3_REF_C804"], "Transcript_ID", q)
@@ -252,6 +261,6 @@ def index():
         tbldm=cfg["COLD_AC_M3_REF_DM"],
         tbl206=cfg["COLD_AC_M3_REF_T206"],
         tbl454=cfg["COLD_AC_M3_REF_C454"],
-
+        transcriptomics_results=transcriptomics_results  # 传递transcriptomics数据到模板
 
     )

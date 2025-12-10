@@ -74,4 +74,4 @@ class Config:
     SALT_48H_REF_DM = os.getenv("SALT_48H_REF_DM", "salt_48h_ref_dm")
     SALT_48H_REF_T206 = os.getenv("SALT_48H_REF_T206", "salt_48h_ref_t206")
 
-    BASE_FILES_DIR = Path(os.getenv("BASE_FILES_DIR", r"D:\potato\二、基因组")).resolve()
+    BASE_FILES_DIR = Path(os.getenv("BASE_FILES_DIR", r"/Users/chenyongtao/Code/potato/二、基因组")).resolve()

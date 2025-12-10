@@ -41,18 +41,17 @@
         box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
         border-radius: 6px;
         padding: 10px;
-
     }
 
     /* 表格样式 */
     .data-table {
         width: 100%;
-        min-width: 1200px; /* 确保列数过多时触发横向滚动 */
+        min-width: 1200px;
         border-collapse: collapse;
     }
 
     .data-table th, .data-table td {
-        white-space: nowrap; /* 禁止内容换行 */
+        white-space: nowrap;
         padding: 12px 15px;
         border: 1px solid #e8e8e8;
         text-align: center;
@@ -66,54 +65,42 @@
         z-index: 2;
     }
 
-    /* 图表滚动容器 - 核心配置 */
+    /* 图表滚动容器 */
     .chart-scroll-wrapper {
-        overflow-x: auto !important;  /* 强制横向滚动 */
+        overflow-x: auto !important;
         overflow-y: hidden !important;
-        margin: 0 !important;  /* 消除内边距  20px 0 */
-        padding: 0 !important;  /* 消除内边距  10px */
+        margin: 0 !important;
+        padding: 0 !important;
         box-sizing: border-box;
         box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
         border-radius: 6px;
         min-height: 420px;
-
     }
 
-    /* 图表内容容器 - 确保宽度超过页面 */
     .chart-wrapper {
-        min-width: 1500px !important;  /* 强制超过页面宽度触发滚动 */
+        min-width: 1500px !important;
         width: 100%;
         display: inline-block;
-        margin: 0 !important; /* 新增：移除容器自身的外边距 */
-        padding: 0 !important; /* 新增：移除容器自身的内边距 */
+        margin: 0 !important;
+        padding: 0 !important;
     }
 
-    /* ECharts图表容器 */
     .chart-container {
         width: 100%;
-        min-width: 1500px !important;  /* 与外层容器匹配 */
+        min-width: 1500px !important;
         height: 400px;
-        margin: 0 !important; /* 新增：移除容器自身的外边距 */
-        padding: 0 !important; /* 新增：移除容器自身的内边距 */
+        margin: 0 !important;
+        padding: 0 !important;
     }
 
-    /* 额外添加：检查并清除父元素可能的空白 */
     .content-container {
-        font-size: 0; /* 临时测试：消除 inline-block 元素间的空白字符影响 */
+        font-size: 0;
     }
 
-    /* 恢复子元素字体大小，避免继承父元素的0 */
     .content-container > * {
         font-size: 16px;
     }
 
-    /* 解除ECharts内部宽度限制 */
-    div[data-echarts-instance] {
-        width: auto !important;
-        overflow: visible !important;
-    }
-
-    /* 响应式调整 */
     @media (max-width: 768px) {
         input {
             width: 100%;
@@ -150,34 +137,42 @@
     <button type="submit">Search</button>
 </form>
 
-<!-- 关联基因按钮区域 -->
-{% if q %}
-    <div class="associate-container">
-        <span class="associate-label">Related Gene：</span>
-        {% if associated_genes and associated_genes|length > 0 %}
-            {% for gene in associated_genes %}
-                <form id="associateForm_{{ loop.index }}" method="get" action="{{ url_for('search_Bacterial_wilt_bp.index') }}" style="display: inline;">
-                    <input type="hidden" name="q" value="{{ gene|e }}" />
-                </form>
-                <button class="associate-btn" onclick="document.getElementById('associateForm_{{ loop.index }}').submit()">
-                    {{ gene }}
-                </button>
-            {% endfor %}
-        {% else %}
-            <span style="color: #666;">无关联数据</span>
-        {% endif %}
-    </div>
-{% endif %}
-
-<!-- 无结果提示 -->
-{% if q and not results %}
+{% if q and not results and not transcriptomics_results %}
     <div class="empty">没有找到与 "<b>{{ q|e }}</b>" 匹配的记录。</div>
 {% endif %}
 
-<!-- 表格数据渲染（带滚动） -->
+<!-- 新增：transcriptomics_tool表数据渲染（优先显示） -->
+{% if transcriptomics_results %}
+
+    {% for table_name, rows in transcriptomics_results %}
+        {% for row in rows %}
+            <div class="table-scroll-wrapper">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            {% for key in row.keys() %}
+                                <th>{{ key }}</th>
+                            {% endfor %}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            {% for value in row.values() %}
+                                <td>{{ value }}</td>
+                            {% endfor %}
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        {% endfor %}
+    {% endfor %}
+{% endif %}
+
+
+
+<!-- 原有表格数据渲染 -->
 {% for table_name, rows in results %}
     <div><span class="badge">{{ table_name }}</span></div>
-
     {% for row in rows %}
         <div class="table-scroll-wrapper">
             <table class="data-table">
@@ -200,7 +195,26 @@
     {% endfor %}
 {% endfor %}
 
-<!-- 折线图渲染（带滚动） -->
+<!-- 关联基因按钮区域 -->
+{% if q %}
+    <div class="associate-container">
+        <span class="associate-label">Related Gene：</span>
+        {% if associated_genes and associated_genes|length > 0 %}
+            {% for gene in associated_genes %}
+                <form id="associateForm_{{ loop.index }}" method="get" action="{{ url_for('search_Bacterial_wilt_bp.index') }}" style="display: inline;">
+                    <input type="hidden" name="q" value="{{ gene|e }}" />
+                </form>
+                <button class="associate-btn" onclick="document.getElementById('associateForm_{{ loop.index }}').submit()">
+                    {{ gene }}
+                </button>
+            {% endfor %}
+        {% else %}
+            <span style="color: #666;">无关联数据</span>
+        {% endif %}
+    </div>
+{% endif %}
+
+<!-- 折线图渲染 -->
 {% if chart_code %}
     <div class="chart-scroll-wrapper">
         <div class="chart-wrapper">
@@ -212,7 +226,7 @@
     </div>
 {% endif %}
 
-<!-- 热力图渲染（带滚动） -->
+<!-- 热力图渲染 -->
 {% if heatmap_code %}
     <div class="chart-scroll-wrapper">
         <div class="chart-wrapper">
@@ -229,9 +243,7 @@
     <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            // 确保ECharts加载完成
             if (typeof echarts !== 'undefined') {
-                // 初始化图表大小
                 function resizeCharts() {
                     const chartElements = document.querySelectorAll('[data-echarts-instance]');
                     chartElements.forEach(element => {
@@ -239,10 +251,7 @@
                         if (chart) chart.resize();
                     });
                 }
-
-                // 初始调整
                 resizeCharts();
-                // 窗口大小变化时调整
                 window.addEventListener('resize', resizeCharts);
             }
         });
@@ -256,5 +265,4 @@
     }
 </script>
 
-<!--<div class="empty">提示：若表名不符，请在 <code>app/config.py</code> 中修改 BACTERIAL_WILT_REF_* 相关配置。</div>-->
 {% endblock %}

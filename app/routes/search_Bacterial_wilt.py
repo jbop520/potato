@@ -1,38 +1,3 @@
-# from flask import Blueprint, render_template, request, current_app
-# from ..db import query_one_table
-#
-# search_bp = Blueprint("search_bp", __name__)
-#
-# # 新主页路由
-# @search_bp.route("/", methods=["GET"])
-# def index():
-#     return render_template("index.html")
-#
-# # 原搜索功能，换到 /search
-# @search_bp.route("/search", methods=["GET"])
-# def search_page():
-#     q = (request.args.get("q") or "").strip()
-#     results = []
-#     cfg = current_app.config
-#
-#     if q:
-#         rows_c804 = query_one_table(cfg["TABLE_C804"], "names", q)
-#         if rows_c804:
-#             results.append((cfg["TABLE_C804"], rows_c804))
-#
-#         rows_c882 = query_one_table(cfg["TABLE_C882"], "Transcript_ID", q)
-#         if rows_c882:
-#             results.append((cfg["TABLE_C882"], rows_c882))
-#
-#     return render_template(
-#         "search.html",
-#         q=q,
-#         results=results,
-#         tbl804=cfg["TABLE_C804"],
-#         tbl882=cfg["TABLE_C882"]
-#     )
-
-
 from flask import Blueprint, render_template, request, current_app
 from ..db import query_one_table
 from pyecharts.charts import Line, HeatMap
@@ -41,56 +6,6 @@ from pyecharts.commons.utils import JsCode
 
 
 search_Bacterial_wilt_bp = Blueprint("search_Bacterial_wilt_bp", __name__)
-
-
-# def create_line_chart(results):
-#     try:
-#         if results and len(results) > 0 and len(results[0][1]) > 0:
-#             data_list = results[0][1][0]
-#             keys = list(data_list.keys())
-#             values = list(data_list.values())
-#
-#             numeric_keys = []
-#             numeric_values = []
-#             for k, v in zip(keys, values):
-#                 try:
-#                     numeric_values.append(float(v))
-#                     numeric_keys.append(k)
-#                 except (ValueError, TypeError):
-#                     continue
-#
-#             if numeric_keys:
-#                 # 最简版本，先不设置网格
-#                 line = (
-#                     Line(init_opts=opts.InitOpts(width="7000px", height="400px"))
-#                     .add_xaxis(numeric_keys)
-#                     .add_yaxis("数据值", numeric_values)
-#                     .set_global_opts(
-#                         title_opts=opts.TitleOpts(title="数据折线图"),
-#                         tooltip_opts=opts.TooltipOpts(trigger="axis"),
-#
-#                         xaxis_opts=opts.AxisOpts(
-#                             boundary_gap=False,  # 关闭左右留白
-#                             interval=0,
-#                             axislabel_opts=opts.LabelOpts(
-#                                 font_size=10,
-#                                 margin=15
-#                             ),
-#                             axistick_opts=opts.AxisTickOpts(
-#                                 length=8,
-#                                 is_align_with_label=True
-#                             ),
-#                             name="属性",
-#                             name_location="middle",
-#                             name_gap=30
-#                         ),
-#                         yaxis_opts=opts.AxisOpts(name="数值"),
-#                     )
-#                 )
-#                 return line.render_embed()
-#     except Exception as e:
-#         current_app.logger.error(f"生成折线图失败: {str(e)}")
-#     return None
 
 
 def create_line_chart(results):
@@ -129,14 +44,9 @@ def create_line_chart(results):
                         boundary_gap=False,
                     ),
                     yaxis_opts=opts.AxisOpts(name=""),
-                    # datazoom_opts=[
-                    #     opts.DataZoomOpts(type_="slider", range_start=0, range_end=100),
-                    #     #opts.DataZoomOpts(type_="inside", range_start=0, range_end=100),
-                    # ],
                 )
             )
 
-            # 轻量优化：收紧边距，兼容 pyecharts 2.0.9（不使用 grid_opts 参数）
             try:
                 line.options["grid"] = {"left": "2%", "right": "2%", "top": "12%", "bottom": "18%"}
             except Exception:
@@ -149,7 +59,6 @@ def create_line_chart(results):
         except Exception:
             pass
     return None
-
 
 
 def create_heatmap(results):
@@ -179,7 +88,6 @@ def create_heatmap(results):
                         except (ValueError, TypeError):
                             heatmap_data.append([x, y, 0])
 
-                # 固定宽度为2000px，确保超过容器宽度
                 heatmap = (
                     HeatMap(init_opts=opts.InitOpts(width="7000px", height="400px"))
                     .add_xaxis(numeric_keys)
@@ -195,20 +103,17 @@ def create_heatmap(results):
                     .set_global_opts(
                         title_opts=opts.TitleOpts(title="Heatmap"),
                         visualmap_opts=opts.VisualMapOpts(),
-
                         xaxis_opts=opts.AxisOpts(
                             type_="category",
                             axislabel_opts=opts.LabelOpts(
                                 font_size=10,
                                 interval=0,
-                                # rotate=45,  # 标签旋转减少重叠
                                 margin=15
                             ),
                             axistick_opts=opts.AxisTickOpts(
-                                length=8,  # 刻度线长度，与折线图保持一致
+                                length=8,
                                 is_align_with_label=True
                             ),
-                            # name="属性"
                         ),
                         yaxis_opts=opts.AxisOpts(
                             type_="category",
@@ -226,28 +131,19 @@ def create_heatmap(results):
         current_app.logger.error(f"生成热力图失败: {str(e)}")
     return None
 
+
 def find_associated_gene(query_value, cfg):
-    """修改为返回所有关联基因的列表"""
+    """获取所有关联基因的列表"""
     query_value = query_value.strip()
     associated_genes = []
 
-    # 1. 用names字段查询，获取所有匹配的Transcript_ID
-    # rows_by_names = query_one_table(cfg["COLD_LINKS"], "对比基因ID", query_value)
-    # if rows_by_names:
-    #     associated_genes.extend([row.get("参考基因ID") for row in rows_by_names if row.get("参考基因ID")])
-
-    # 2. 用Transcript_ID字段查询，获取所有匹配的names
     rows_by_transcript = query_one_table(cfg["COLD_LINKS"], "参考基因ID", query_value)
     if rows_by_transcript:
         associated_genes.extend([row.get("对比基因ID") for row in rows_by_transcript if row.get("对比基因ID")])
 
-    # 去重并返回（保持顺序）
-    return list(dict.fromkeys(associated_genes))  # 去重但保留首次出现顺序
+    return list(dict.fromkeys(associated_genes))  # 去重并保留顺序
 
 
-
-
-# 搜索
 @search_Bacterial_wilt_bp.route("/", methods=["GET"])
 def index():
     q = (request.args.get("q") or "").strip()
@@ -255,9 +151,21 @@ def index():
     results = []
     chart_code = None
     heatmap_code = None
+    transcriptomics_results = []  # 存储transcriptomics_tool表的查询结果
     cfg = current_app.config
 
+    # 无论是否有搜索词，都查询transcriptomics_tool表中与bacterial_wilt相关的数据
+    # 首次进入页面时自动加载，有搜索词时同时显示
+    transcript_rows = query_one_table(
+        cfg["TRANSCRIPTOMICS_TOOL"],  # 需在config.py中配置表名
+        "处理",  # 实际存储胁迫类型的字段名（根据表结构调整）
+        "Bacterial_wilt"  # 固定搜索关键词
+    )
+    if transcript_rows:
+        transcriptomics_results.append(("Transcriptomics Tool Data", transcript_rows))
+
     if q:
+        # 原有细菌枯萎相关数据表查询逻辑
         rows_c804 = query_one_table(cfg["BACTERIAL_WILT_REF_C804"], "Transcript_ID", q)
         if rows_c804:
             results.append((cfg["BACTERIAL_WILT_REF_C804"], rows_c804))
@@ -282,9 +190,12 @@ def index():
         if rows_t206:
             results.append((cfg["BACTERIAL_WILT_REF_T206"], rows_t206))
 
+        # 生成图表
         if results:
             chart_code = create_line_chart(results)
             heatmap_code = create_heatmap(results)
+
+    # 获取关联基因
     associated_genes = find_associated_gene(q, cfg) if q else []
 
     return render_template(
@@ -300,6 +211,5 @@ def index():
         tbldm=cfg["BACTERIAL_WILT_REF_DM"],
         tbl206=cfg["BACTERIAL_WILT_REF_T206"],
         tbl454=cfg["BACTERIAL_WILT_REF_C454"],
-
-
+        transcriptomics_results=transcriptomics_results  # 传递transcriptomics数据到模板
     )

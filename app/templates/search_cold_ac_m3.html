@@ -135,34 +135,42 @@
     <button type="submit">Search</button>
 </form>
 
-<!-- 关联基因按钮区域 -->
-{% if q %}
-    <div class="associate-container">
-        <span class="associate-label">Related Gene：</span>
-        {% if associated_genes and associated_genes|length > 0 %}
-            {% for gene in associated_genes %}
-                <form id="associateForm_{{ loop.index }}" method="get" action="{{ url_for('search_cold_ac_m3_bp.index') }}" style="display: inline;">
-                    <input type="hidden" name="q" value="{{ gene|e }}" />
-                </form>
-                <button class="associate-btn" onclick="document.getElementById('associateForm_{{ loop.index }}').submit()">
-                    {{ gene }}
-                </button>
-            {% endfor %}
-        {% else %}
-            <span style="color: #666;">无关联数据</span>
-        {% endif %}
-    </div>
-{% endif %}
-
-<!-- 无结果提示 -->
-{% if q and not results %}
+{% if q and not results and not transcriptomics_results %}
     <div class="empty">没有找到与 "<b>{{ q|e }}</b>" 匹配的记录。</div>
 {% endif %}
 
-<!-- 表格数据渲染（带滚动） -->
+<!-- 新增：transcriptomics_tool表数据渲染（优先显示） -->
+{% if transcriptomics_results %}
+
+    {% for table_name, rows in transcriptomics_results %}
+        {% for row in rows %}
+            <div class="table-scroll-wrapper">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            {% for key in row.keys() %}
+                                <th>{{ key }}</th>
+                            {% endfor %}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            {% for value in row.values() %}
+                                <td>{{ value }}</td>
+                            {% endfor %}
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        {% endfor %}
+    {% endfor %}
+{% endif %}
+
+
+
+<!-- 原有表格数据渲染 -->
 {% for table_name, rows in results %}
     <div><span class="badge">{{ table_name }}</span></div>
-
     {% for row in rows %}
         <div class="table-scroll-wrapper">
             <table class="data-table">
@@ -184,6 +192,25 @@
         </div>
     {% endfor %}
 {% endfor %}
+
+<!-- 关联基因按钮区域 -->
+{% if q %}
+    <div class="associate-container">
+        <span class="associate-label">Related Gene：</span>
+        {% if associated_genes and associated_genes|length > 0 %}
+            {% for gene in associated_genes %}
+                <form id="associateForm_{{ loop.index }}" method="get" action="{{ url_for('search_cold_ac_m3_bp.index') }}" style="display: inline;">
+                    <input type="hidden" name="q" value="{{ gene|e }}" />
+                </form>
+                <button class="associate-btn" onclick="document.getElementById('associateForm_{{ loop.index }}').submit()">
+                    {{ gene }}
+                </button>
+            {% endfor %}
+        {% else %}
+            <span style="color: #666;">无关联数据</span>
+        {% endif %}
+    </div>
+{% endif %}
 
 <!-- 折线图渲染（带滚动） -->
 {% if chart_code %}
