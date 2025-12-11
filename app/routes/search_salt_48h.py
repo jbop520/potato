@@ -1,51 +1,10 @@
-# from flask import Blueprint, render_template, request, current_app
-# from ..db import query_one_table
-#
-# search_bp = Blueprint("search_bp", __name__)
-#
-# # 新主页路由
-# @search_bp.route("/", methods=["GET"])
-# def index():
-#     return render_template("index.html")
-#
-# # 原搜索功能，换到 /search
-# @search_bp.route("/search", methods=["GET"])
-# def search_page():
-#     q = (request.args.get("q") or "").strip()
-#     results = []
-#     cfg = current_app.config
-#
-#     if q:
-#         rows_c804 = query_one_table(cfg["TABLE_C804"], "names", q)
-#         if rows_c804:
-#             results.append((cfg["TABLE_C804"], rows_c804))
-#
-#         rows_c882 = query_one_table(cfg["TABLE_C882"], "Transcript_ID", q)
-#         if rows_c882:
-#             results.append((cfg["TABLE_C882"], rows_c882))
-#
-#     return render_template(
-#         "search.html",
-#         q=q,
-#         results=results,
-#         tbl804=cfg["TABLE_C804"],
-#         tbl882=cfg["TABLE_C882"]
-#     )
-
-
 from flask import Blueprint, render_template, request, current_app, url_for
-from ..db import query_one_table, query_db
+from ..db import query_one_table, query_db  # 确保导入query_db
 from pyecharts.charts import Line, HeatMap
 from pyecharts import options as opts
+from pyecharts.commons.utils import JsCode
 
-# 调整JsCode的导入路径，兼容旧版本pyecharts
-try:
-    from pyecharts import JsCode  # 适用于较新版本
-except ImportError:
-    from pyecharts.commons.utils import JsCode  # 适用于旧版本
-from pyecharts.options import AxisTickOpts
-from pyecharts import options as opts
-search_cold_ac_m4_2h_bp = Blueprint("search_cold_ac_m4_2h_bp", __name__)
+search_salt_48h_bp = Blueprint("search_salt_48h_bp", __name__)
 
 
 def create_line_chart(results):
@@ -60,47 +19,44 @@ def create_line_chart(results):
             for k, v in zip(keys, values):
                 try:
                     numeric_values.append(float(v))
-                    numeric_keys.append(k)
+                    numeric_keys.append(str(k))
                 except (ValueError, TypeError):
                     continue
 
-            if numeric_keys:
-                # 固定宽度为2000px，确保超过容器宽度
-                line = (
-                    Line(init_opts=opts.InitOpts(width="9000px", height="400px"))
-                    .add_xaxis(numeric_keys)
-                    .add_yaxis("", numeric_values)
-                    .set_global_opts(
-                        title_opts=opts.TitleOpts(title="Line Graph"),
-                        tooltip_opts=opts.TooltipOpts(trigger="axis"),
-                        xaxis_opts=opts.AxisOpts(
-                            interval=0,
+            if not numeric_keys:
+                return None
 
-                            axislabel_opts=opts.LabelOpts(
-                                font_size=10,
-                                # rotate=-45,  # 标签旋转减少重叠
-                                margin=15
-                            ),
-                            axistick_opts=opts.AxisTickOpts(
-                                length=8 , # 刻度线长度，可调整为 10、12 等
-                                is_align_with_label=True
-                            ),
-                            # boundary_gap=False,
-                            name="",
-                            name_location="middle",
-                            name_gap=30
-                        ),
-                        yaxis_opts=opts.AxisOpts(name=""),
-                    )
+            line = (
+                Line(init_opts=opts.InitOpts(width="3000px", height="400px"))
+                .add_xaxis(numeric_keys)
+                .add_yaxis("", numeric_values)
+                .set_global_opts(
+                    title_opts=opts.TitleOpts(title=" Line Graph"),
+                    tooltip_opts=opts.TooltipOpts(trigger="axis"),
+                    xaxis_opts=opts.AxisOpts(
+                        interval=0,
+                        axislabel_opts=opts.LabelOpts(font_size=10, margin=15),
+                        axistick_opts=opts.AxisTickOpts(length=8, is_align_with_label=True),
+                        name="",
+                        name_location="middle",
+                        name_gap=30,
+                        boundary_gap=False,
+                    ),
+                    yaxis_opts=opts.AxisOpts(name=""),
                 )
+            )
 
-                try:
-                    line.options["grid"] = {"left": "1%", "right": "1%", "top": "15%", "bottom": "18%"}
-                except Exception:
-                    pass
-                return line.render_embed()
+            try:
+                line.options["grid"] = {"left": "2%", "right": "2%", "top": "12%", "bottom": "18%"}
+            except Exception:
+                pass
+
+            return line.render_embed()
     except Exception as e:
-        current_app.logger.error(f"生成折线图失败: {str(e)}")
+        try:
+            current_app.logger.error(f"生成折线图失败: {str(e)}")
+        except Exception:
+            pass
     return None
 
 
@@ -131,13 +87,12 @@ def create_heatmap(results):
                         except (ValueError, TypeError):
                             heatmap_data.append([x, y, 0])
 
-                # 固定宽度为2000px，确保超过容器宽度
                 heatmap = (
-                    HeatMap(init_opts=opts.InitOpts(width="9000px", height="400px"))
+                    HeatMap(init_opts=opts.InitOpts(width="7000px", height="400px"))
                     .add_xaxis(numeric_keys)
                     .add_yaxis(
                         "",
-                        [],
+                        [f"Sample {i + 1}" for i in range(len(data_rows))],  # 添加Y轴标签
                         heatmap_data,
                         label_opts=opts.LabelOpts(
                             is_show=True,
@@ -145,22 +100,19 @@ def create_heatmap(results):
                         ),
                     )
                     .set_global_opts(
-                        title_opts=opts.TitleOpts(title="Heatmap"),
+                        title_opts=opts.TitleOpts(title=" Heatmap"),
                         visualmap_opts=opts.VisualMapOpts(),
-
                         xaxis_opts=opts.AxisOpts(
                             type_="category",
                             axislabel_opts=opts.LabelOpts(
                                 font_size=10,
                                 interval=0,
-                                # rotate=45,  # 标签旋转减少重叠
                                 margin=15
                             ),
                             axistick_opts=opts.AxisTickOpts(
-                                length=8,  # 刻度线长度，与折线图保持一致
+                                length=8,
                                 is_align_with_label=True
                             ),
-                            name=""
                         ),
                         yaxis_opts=opts.AxisOpts(
                             type_="category",
@@ -170,7 +122,7 @@ def create_heatmap(results):
                 )
 
                 try:
-                    heatmap.options["grid"] = {"left": "1%", "right": "1%", "top": "15%", "bottom": "18%"}
+                    heatmap.options["grid"] = {"left": "2%", "right": "2%", "top": "20%", "bottom": "18%"}
                 except Exception:
                     pass
                 return heatmap.render_embed()
@@ -178,23 +130,18 @@ def create_heatmap(results):
         current_app.logger.error(f"生成热力图失败: {str(e)}")
     return None
 
+
 def find_associated_gene(query_value, cfg):
-    """修改为返回所有关联基因的列表"""
+    """获取所有关联基因的列表"""
     query_value = query_value.strip()
     associated_genes = []
 
-    # 1. 用names字段查询，获取所有匹配的Transcript_ID
-    # rows_by_names = query_one_table(cfg["COLD_LINKS"], "对比基因ID", query_value)
-    # if rows_by_names:
-    #     associated_genes.extend([row.get("参考基因ID") for row in rows_by_names if row.get("参考基因ID")])
-
-    # 2. 用Transcript_ID字段查询，获取所有匹配的names
     rows_by_transcript = query_one_table(cfg["COLD_LINKS"], "参考基因ID", query_value)
     if rows_by_transcript:
         associated_genes.extend([row.get("对比基因ID") for row in rows_by_transcript if row.get("对比基因ID")])
 
-    # 去重并返回（保持顺序）
-    return list(dict.fromkeys(associated_genes))  # 去重但保留首次出现顺序
+    return list(dict.fromkeys(associated_genes))  # 去重并保留顺序
+
 
 def get_gene_related_treatments(gene_id):
     """
@@ -221,10 +168,10 @@ def get_gene_related_treatments(gene_id):
             "display_name": "Cold (NAC_M4_3h)",
             "route_code": "search_cold_nac_m4_3h_bp.index"
         },
-        "salt_48h": {
-            "display_name": "Salt (48h)",
-            "route_code": "search_salt_48h_bp.index"
-        },
+        # "salt_48h": {
+        #     "display_name": "Salt (48h)",
+        #     "route_code": "search_salt_48h_bp.index"
+        # },
         "tuber_development": {
             "display_name": "Tuber Development",
             "route_code": "search_tuber_development_bp.index"
@@ -285,7 +232,7 @@ def get_gene_related_treatments(gene_id):
         # 排除当前处理
         related_treatments = [
             t for t in related_treatments
-            if t["route"] != "search_cold_ac_m4_2h_bp.index"
+            if t["route"] != "search_salt_48h_bp.index"
         ]
         return related_treatments
 
@@ -294,8 +241,7 @@ def get_gene_related_treatments(gene_id):
         return related_treatments
 
 
-# 搜索
-@search_cold_ac_m4_2h_bp.route("/", methods=["GET"])
+@search_salt_48h_bp.route("/", methods=["GET"])
 def index():
     q = (request.args.get("q") or "").strip()
 
@@ -303,65 +249,81 @@ def index():
     chart_code = None
     heatmap_code = None
     transcriptomics_results = []
-    cfg = current_app.config
     related_treatments = []
+    cfg = current_app.config
 
     if q:
         # 获取关联处理
         related_treatments = get_gene_related_treatments(q)
 
+    # 查询transcriptomics_tool表数据
     transcript_rows = query_one_table(
-        cfg["TRANSCRIPTOMICS_TOOL"],  # 需在config.py中配置表名
-        "处理",  # 实际存储胁迫类型的字段名（根据表结构调整）
-        "Cold_AC_M4_2h"  # 固定搜索关键词
+        cfg.get("TRANSCRIPTOMICS_TOOL", ""),
+        "处理",
+        "Salt_48h"
     )
     if transcript_rows:
         transcriptomics_results.append(("Transcriptomics Tool Data", transcript_rows))
 
     if q:
-        rows_c804 = query_one_table(cfg["COLD_AC_M4_2H_REF_C804"], "Transcript_ID", q)
+        # 细菌枯萎相关数据表查询
+        rows_c804 = query_one_table(cfg.get("SALT_48H_REF_C804", ""), "Transcript_ID", q)
         if rows_c804:
-            results.append((cfg["COLD_AC_M4_2H_REF_C804"], rows_c804))
+            results.append((cfg["SALT_48H_REF_C804"], rows_c804))
 
-        rows_c882 = query_one_table(cfg["COLD_AC_M4_2H_REF_C882"], "Transcript_ID", q)
+        rows_c882 = query_one_table(cfg.get("SALT_48H_REF_C882", ""), "Transcript_ID", q)
         if rows_c882:
-            results.append((cfg["COLD_AC_M4_2H_REF_C882"], rows_c882))
+            results.append((cfg["SALT_48H_REF_C882"], rows_c882))
 
-        rows_c830 = query_one_table(cfg["COLD_AC_M4_2H_REF_C830"], "Transcript_ID", q)
+        rows_c830 = query_one_table(cfg.get("SALT_48H_REF_C830", ""), "Transcript_ID", q)
         if rows_c830:
-            results.append((cfg["COLD_AC_M4_2H_REF_C830"], rows_c830))
+            results.append((cfg["SALT_48H_REF_C830"], rows_c830))
 
-        rows_c454 = query_one_table(cfg["COLD_AC_M4_2H_REF_C454"], "Transcript_ID", q)
+        rows_c454 = query_one_table(cfg.get("SALT_48H_REF_C454", ""), "Transcript_ID", q)
         if rows_c454:
-            results.append((cfg["COLD_AC_M4_2H_REF_C454"], rows_c454))
+            results.append((cfg["SALT_48H_REF_C454"], rows_c454))
 
-        rows_dm = query_one_table(cfg["COLD_AC_M4_2H_REF_DM"], "Transcript_ID", q)
+        rows_dm = query_one_table(cfg.get("SALT_48H_REF_DM", ""), "Transcript_ID", q)
         if rows_dm:
-            results.append((cfg["COLD_AC_M4_2H_REF_DM"], rows_dm))
+            results.append((cfg["SALT_48H_REF_DM"], rows_dm))
 
-        rows_t206 = query_one_table(cfg["COLD_AC_M4_2H_REF_T206"], "Transcript_ID", q)
+        rows_t206 = query_one_table(cfg.get("SALT_48H_REF_T206", ""), "Transcript_ID", q)
         if rows_t206:
-            results.append((cfg["COLD_AC_M4_2H_REF_T206"], rows_t206))
+            results.append((cfg["SALT_48H_REF_T206"], rows_t206))
 
+        # 生成图表
         if results:
             chart_code = create_line_chart(results)
             heatmap_code = create_heatmap(results)
+
+    # 获取关联基因
     associated_genes = find_associated_gene(q, cfg) if q else []
 
+    # print("Related Treatments:")
+    # for treatment in related_treatments:
+    #     print(f"- Name: {treatment.get('name')}, URL: {treatment.get('url')}")
+    #     # 检查 URL 是否对应 search_Bacterial_wilt_bp.index 路由
+    #     if 'search_Bacterial_wilt_bp.index' in str(treatment.get('url')):
+    #         print(f"  ✅ 包含目标路由: search_Bacterial_wilt_bp.index")
+    #
+    # # 如果 related_treatments 为空
+    # if not related_treatments:
+    #     print("Related Treatments is empty")
+
+
     return render_template(
-        "search_cold_ac_m4_2h.html",
+        "search_salt_48h.html",
         q=q,
         results=results,
         chart_code=chart_code,
         heatmap_code=heatmap_code,
         associated_genes=associated_genes,
-        tbl804=cfg["COLD_AC_M4_2H_REF_C804"],
-        tbl882=cfg["COLD_AC_M4_2H_REF_C882"],
-        tbl830=cfg["COLD_AC_M4_2H_REF_C830"],
-        tbldm=cfg["COLD_AC_M4_2H_REF_DM"],
-        tbl206=cfg["COLD_AC_M4_2H_REF_T206"],
-        tbl454=cfg["COLD_AC_M4_2H_REF_C454"],
+        tbl804=cfg.get("SALT_48H_REF_C804", ""),
+        tbl882=cfg.get("SALT_48H_REF_C882", ""),
+        tbl830=cfg.get("SALT_48H_REF_C830", ""),
+        tbldm=cfg.get("SALT_48H_REF_DM", ""),
+        tbl206=cfg.get("SALT_48H_REF_T206", ""),
+        tbl454=cfg.get("SALT_48H_REF_C454", ""),
         transcriptomics_results=transcriptomics_results,
         related_treatments=related_treatments
-
     )

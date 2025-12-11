@@ -139,6 +139,19 @@
     <div class="empty">没有找到与 "<b>{{ q|e }}</b>" 匹配的记录。</div>
 {% endif %}
 
+
+
+<!-- 关联处理展示区域 -->
+{% if q and related_treatments and related_treatments|length > 0 %}
+    <div class="associate-container">
+        <span class="associate-label">Related Treatments：</span>
+        {% for treatment in related_treatments %}
+            <a href="{{ treatment.url }}" class="associate-btn">{{ treatment.name }}</a>
+        {% endfor %}
+    </div>
+{% endif %}
+
+
 <!-- 新增：transcriptomics_tool表数据渲染（优先显示） -->
 {% if transcriptomics_results %}
 

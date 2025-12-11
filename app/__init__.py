@@ -13,6 +13,7 @@ from .routes.search_cold_ac_m4_2h import search_cold_ac_m4_2h_bp
 from .routes.search_cold_nac_m4_3h import search_cold_nac_m4_3h_bp
 from .routes.search_hot import search_hot_bp
 from .routes.search_multiple_treatments import search_multiple_treatments_bp
+from .routes.search_salt_48h import search_salt_48h_bp
 from .routes.search_transcriptomics import search_transcriptomics_bp
 from .routes.search_tuber_development import search_tuber_development_bp
 from .routes.transcriptomics_cold_tool import transcriptomics_cold_tool_bp
@@ -40,4 +41,5 @@ def create_app():
     app.register_blueprint(search_cold_ac_candol_m4_2h_bp, url_prefix='/search_cold_ac_candol_m4_2h_bp')
     app.register_blueprint(transcriptomics_cold_tool_bp, url_prefix='/transcriptomics_cold_tool_bp')
     app.register_blueprint(search_cold_nac_m4_3h_bp, url_prefix='/search_cold_nac_m4_3h_bp')
+    app.register_blueprint(search_salt_48h_bp, url_prefix='/search_salt_48h_bp')
     return app

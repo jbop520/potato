@@ -43,3 +43,23 @@ def query_one_table(table: str, key_col: str, key_value: str):
             return cur.fetchall()
     finally:
         conn.close()
+
+def query_db(sql: str, params: tuple = None, one: bool = False):
+    """
+    执行自定义SQL查询
+    :param sql: 自定义SQL语句（使用%s作为参数占位符）
+    :param params: SQL参数（元组类型，可选）
+    :param one: 是否只返回单条结果，默认False（返回所有结果）
+    :return: 查询结果（字典或字典列表）
+    """
+    conn = get_conn()
+    try:
+        with conn.cursor() as cur:
+            if params:
+                cur.execute(sql, params)
+            else:
+                cur.execute(sql)
+            # 根据 one 参数决定返回单条还是所有结果
+            return cur.fetchone() if one else cur.fetchall()
+    finally:
+        conn.close()
