@@ -340,7 +340,7 @@
             transition: all 0.3s;
         }
 
-        .has-submenu:hover .sub-dropdown {
+        .has-submenu:hover > .sub-dropdown {
             opacity: 1;
             visibility: visible;
             transform: translateY(0);
@@ -497,7 +497,7 @@
             transition: all 0.3s;
         }
 
-        .has-thirdmenu:hover .third-dropdown {
+        .has-thirdmenu:hover > .third-dropdown {
             opacity: 1;
             visibility: visible;
             transform: translateY(0);
@@ -549,13 +549,22 @@
                 <div class="nav-item">
                     <a href="{{ url_for('transcriptomics_tool_bp.index') }}" style="text-decoration: none; color: inherit;">Transcriptomics</a>
                     <div class="dropdown">
+                        <a class="dropdown-item" href="{{ url_for('search_id_transcriptomics_bp.index') }}">
+                            <span class="icon">🔎</span> ID search
+                        </a>
+
+                        <div class="dropdown-item has-submenu">
+                            <span class="icon">🧪</span> Treatment Search
+                            <span style="float: right;">→</span>
+                            <div class="sub-dropdown">
                         <div class="dropdown-item has-submenu">
                             <span class="icon">🌟</span> Abiotic stress
                             <span style="float: right;">→</span>
                             <div class="sub-dropdown">
                                 <div class="sub-dropdown-item has-thirdmenu">
                                     <a class="third-dropdown-item" href="{{ url_for('transcriptomics_cold_tool_bp.index') }}">
-                                    <span class="icon">❄️</span> Cold Stress
+                                        <span class="icon">❄️</span> Cold Stress
+                                    </a>
                                     <span style="float: right;"></span>
                                     <div class="third-dropdown">
                                         <a class="third-dropdown-item" href="{{ url_for('search_cold_nac_m4_3h_bp.index') }}">
@@ -824,6 +833,8 @@
 <!--                                        </a>-->
 <!--                                    </div>-->
 <!--                                </div>-->
+                            </div>
+                        </div>
                             </div>
                         </div>
                     </div>

@@ -1,0 +1,196 @@
+{% extends "test.html" %}
+
+{% block title %} 数据查询{% endblock %}
+
+{% block content %}
+<style>
+    /* 关联基因和处理区域样式 */
+    .content-container .relation-container {
+        margin: 15px 0;
+        padding: 10px;
+        border-radius: 4px;
+        background-color: #f0f7ff;
+    }
+
+    .content-container .relation-label {
+        font-weight: bold;
+        color: #1890ff;
+        margin-right: 10px;
+        display: inline-block;
+        min-width: 100px;
+    }
+
+    .content-container .relation-btn {
+        margin: 0 5px 5px;
+        padding: 6px 12px;
+        background-color: #2563eb;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        text-decoration: none;
+        display: inline-block;
+    }
+
+    .content-container .relation-btn:hover {
+        background-color: #1d4ed8;
+        color: white;
+    }
+
+    /* 表格滚动容器样式 */
+    .table-scroll-wrapper {
+        overflow-x: auto;
+        overflow-y: auto;
+        max-height: 500px;
+        margin: 15px 0;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        border-radius: 6px;
+        padding: 10px;
+    }
+
+    /* 表格样式 */
+    .data-table {
+        width: 100%;
+        min-width: 1200px;
+        border-collapse: collapse;
+    }
+
+    .data-table th, .data-table td {
+        white-space: nowrap;
+        padding: 12px 15px;
+        border: 1px solid #e8e8e8;
+        text-align: center;
+    }
+
+    .data-table th {
+        background-color: #fafafa;
+        font-weight: bold;
+        position: sticky;
+        top: 0;
+        z-index: 2;
+    }
+
+    /* 图表滚动容器 */
+    .chart-scroll-wrapper {
+        overflow-x: auto !important;
+        overflow-y: hidden !important;
+        margin: 20px 0 !important;
+        padding: 0 !important;
+        box-sizing: border-box;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        border-radius: 6px;
+        min-height: 420px;
+    }
+
+    .chart-wrapper {
+        min-width: 1500px !important;
+        width: 100%;
+        display: inline-block;
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+
+    .chart-container {
+        width: 100%;
+        min-width: 1500px !important;
+        height: 400px;
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+
+    .content-container {
+        font-size: 0;
+    }
+
+    .content-container > * {
+        font-size: 16px;
+    }
+
+    .section-title {
+        margin: 25px 0 10px;
+        color: #1890ff;
+        font-size: 18px;
+        font-weight: bold;
+        border-bottom: 1px solid #e8e8e8;
+        padding-bottom: 5px;
+    }
+
+    /* 无结果提示样式 */
+    .empty {
+        margin: 20px 0;
+        padding: 15px;
+        background-color: #fff3cd;
+        border: 1px solid #ffeaa7;
+        border-radius: 4px;
+        color: #856404;
+        font-size: 16px;
+    }
+
+    .empty b {
+        color: #d35400;
+    }
+
+    @media (max-width: 768px) {
+        input {
+            width: 100%;
+            margin-right: 0;
+            margin-bottom: 10px;
+        }
+
+        button {
+            width: 100%;
+        }
+
+        .table-scroll-wrapper, .chart-scroll-wrapper {
+            margin: 10px 0 20px;
+            padding: 5px;
+        }
+
+        .data-table th, .data-table td {
+            padding: 8px 10px;
+            font-size: 12px;
+        }
+
+        .chart-container {
+            height: 300px;
+            min-width: 1000px !important;
+        }
+
+        .empty {
+            padding: 10px;
+            font-size: 14px;
+        }
+    }
+</style>
+
+<h1>ID Searching</h1>
+
+<!-- 查询表单 -->
+<form method="get" action="{{ url_for('search_id_transcriptomics_bp.index') }}">
+    <input name="q" type="text" placeholder="Enter Transcript_ID to search" value="{{ q|e }}" autofocus />
+    <button type="submit">Search</button>
+</form>
+
+<!-- 如果没有查询到结果时显示提示 -->
+{% if q and not related_treatments %}
+    <div class="empty">
+        没有找到与 "<b>{{ q|e }}</b>" 匹配的记录。
+        {% if q.startswith('DM8') or q.startswith('ScomH1c') or q.startswith('ScanH1c') or q.startswith('SverC') or q.startswith('Smochap1C') or q.startswith('SchoHap1C') %}
+            <br><small>提示：基因ID格式正确，但在数据库中未找到相关处理信息。</small>
+        {% else %}
+            <br><small>提示：请输入有效的基因ID格式（如：DM8C01G00100, ScomH1c_001等）。</small>
+        {% endif %}
+    </div>
+{% endif %}
+
+<!-- 关联处理展示区域 -->
+{% if q and related_treatments and related_treatments|length > 0 %}
+    <div class="relation-container">
+        <span class="relation-label">Related Treatments：</span>
+        {% for treatment in related_treatments %}
+            <a href="{{ treatment.url }}" class="relation-btn">{{ treatment.name }}</a>
+        {% endfor %}
+    </div>
+{% endif %}
+
+{% endblock %}
