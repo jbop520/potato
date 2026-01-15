@@ -31,8 +31,8 @@ MAX_READ_BYTES = 1 * 1024 * 1024  # 最大读取1MB
 ROOT_WHITELIST = [
     "/Users/chenyongtao/Code/potato"  # 替换为你的根目录
 ]
-DEFAULT_ROOT = "/Users/chenyongtao/Code/potato/二、基因组/C454"  # 替换为文件目录
-BASE_GENOME_PATH = "/Users/chenyongtao/Code/potato/二、基因组"  # 基因组文件的基础路径
+DEFAULT_ROOT = "/Users/chenyongtao/Code/potato/Genomics/C454"  # 替换为文件目录
+BASE_GENOME_PATH = "/Users/chenyongtao/Code/potato/Genomics"  # 基因组文件的基础路径
 
 
 # ========== 安全校验 ==========

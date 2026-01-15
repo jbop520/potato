@@ -17,10 +17,10 @@ def query_annotation_data(chromosome, start, end):
     cfg = current_app.config
     # 定义需要查询的注释表（从配置读取，兜底固定值）
     annotation_tables = {
-        "T206_gene_annotation": cfg.get("T206_GENE_ANNOTATION", "T206_gene_annotation"),
-        "C454_gene_annotation": cfg.get("C454_GENE_ANNOTATION", "C454_gene_annotation"),
-        "C882_gene_annotation": cfg.get("C882_GENE_ANNOTATION", "C882_gene_annotation"),
-        "C804_gene_annotation": cfg.get("C804_GENE_ANNOTATION", "C804_gene_annotation"),
+        "T206_gene_annotation": cfg.get("T206_GENE_ANNOTATION", "t206_gene_annotation"),
+        "C454_gene_annotation": cfg.get("C454_GENE_ANNOTATION", "c454_gene_annotation"),
+        "C882_gene_annotation": cfg.get("C882_GENE_ANNOTATION", "c882_gene_annotation"),
+        "C804_gene_annotation": cfg.get("C804_GENE_ANNOTATION", "c804_gene_annotation"),
         "DM8_gene_annotation": cfg.get("DM8_GENE_ANNOTATION", "dm8_gene_annotation")   # 补充原需求笔误的C804重复问题，替换为C830
     }
 
