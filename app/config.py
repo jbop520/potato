@@ -76,3 +76,9 @@ class Config:
     SALT_48H_REF_T206 = os.getenv("SALT_48H_REF_T206", "salt_48h_ref_t206")
 
     BASE_FILES_DIR = Path(os.getenv("BASE_FILES_DIR", r"/Users/chenyongtao/Code/potato/二、基因组")).resolve()
+    GENOMICS_SHOW = os.getenv("GENOMICS_SHOW", "genomics_show")
+    DM8_gene_annotation = os.getenv("DM8_GENE_ANNOTATION", "dm8_gene_annotation")
+    C454_gene_annotation = os.getenv("C454_GENE_ANNOTATION", "c454_gene_annotation")
+    C804_gene_annotation = os.getenv("C804_GENE_ANNOTATION", "c804_gene_annotation")
+    C882_gene_annotation =os.getenv("C882_GENE_ANNOTATION", "c882_gene_annotation")
+    T206_gene_annotation = os.getenv("T206_GENE_ANNOTATION", "t206_gene_annotation")

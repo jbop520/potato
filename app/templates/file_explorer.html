@@ -1,0 +1,319 @@
+{% extends "test.html" %}
+
+{% block content %}
+<div class="file-explorer-container" style="display: flex; position: relative; z-index: 10; width: 100%; min-height: 800px;">
+    <!-- 左侧导航栏 -->
+    <div class="sidebar" style="position: relative; z-index: 11; width: 300px; min-width: 300px; background: #f8f9fa; border-radius: 8px; padding: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+        <!-- 视图切换 -->
+        <div class="view-switch" style="margin-bottom: 20px;">
+            <div style="display: flex; border: 1px solid #dee2e6; border-radius: 4px; overflow: hidden;">
+                <form method="POST" style="flex: 1;">
+                    <input type="hidden" name="current_dir" value="{{ current_dir }}">
+                    <input type="hidden" name="show_database" value="true">
+                    <button type="submit" class="view-btn {% if show_database %}active{% endif %}"
+                            style="width: 100%; padding: 10px; border: none; background: {% if show_database %}#0d6efd{% else %}#f8f9fa{% endif %};
+                                   color: {% if show_database %}white{% else %}#333{% endif %}; cursor: pointer;">
+                        数据库
+                    </button>
+                </form>
+
+                <form method="POST" style="flex: 1;">
+                    <input type="hidden" name="current_dir" value="{{ current_dir }}">
+                    <input type="hidden" name="show_database" value="false">
+                    <button type="submit" class="view-btn {% if not show_database %}active{% endif %}"
+                            style="width: 100%; padding: 10px; border: none; background: {% if not show_database %}#28a745{% else %}#f8f9fa{% endif %};
+                                   color: {% if not show_database %}white{% else %}#333{% endif %}; cursor: pointer;">
+                        文件
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- 文件视图内容 -->
+        {% if not show_database %}
+        <div class="file-section">
+            <div class="dir-header">
+                <!-- 返回上级按钮 -->
+                <form id="goUpForm" method="POST" style="margin-bottom: 15px;">
+                    <input type="hidden" name="current_dir" value="{{ current_dir }}">
+                    <input type="hidden" name="action" value="go_up">
+                    <input type="hidden" name="show_database" value="false">
+                    <button type="submit" class="back-btn">
+                        ← 返回上级
+                    </button>
+                </form>
+            </div>
+
+            <div class="current-path" style="margin-bottom: 15px; padding: 8px; background: #e9ecef; border-radius: 4px; font-size: 13px;">
+                📍 {{ current_dir }}
+            </div>
+
+            <!-- 子目录列表 -->
+            {% if dirs %}
+            <div class="dirs-section" style="margin-bottom: 20px;">
+                <div style="font-size: 14px; font-weight: bold; margin-bottom: 8px; color: #495057;">📁 子目录</div>
+                {% for dir in dirs %}
+                    <form method="POST" style="margin-bottom: 5px;">
+                        <input type="hidden" name="current_dir" value="{{ current_dir }}">
+                        <input type="hidden" name="action" value="enter_dir">
+                        <input type="hidden" name="dir_name" value="{{ dir }}">
+                        <input type="hidden" name="show_database" value="false">
+                        <button type="submit" class="dir-item"
+                                style="width: 100%; text-align: left; padding: 8px 10px; background: #e7f1ff; border: none;
+                                       border-radius: 4px; color: #0d6efd; cursor: pointer; font-size: 13px;">
+                            📁 {{ dir }}
+                        </button>
+                    </form>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <!-- 文件列表 -->
+            {% if files %}
+            <div class="files-section">
+                <div style="font-size: 14px; font-weight: bold; margin-bottom: 8px; color: #495057;">📄 文件</div>
+                {% for file in files %}
+                    <form method="POST" style="margin-bottom: 5px;">
+                        <input type="hidden" name="current_dir" value="{{ current_dir }}">
+                        <input type="hidden" name="selected_file" value="{{ file }}">
+                        <input type="hidden" name="show_database" value="false">
+                        <button type="submit" class="file-item"
+                                style="width: 100%; text-align: left; padding: 8px 10px; background: white; border: 1px solid #dee2e6;
+                                       border-radius: 4px; color: #333; cursor: pointer; font-size: 13px; display: flex; align-items: center;">
+                            <span style="color: #0d6efd; margin-right: 8px;">📄</span>
+                            <span style="flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ file }}</span>
+                        </button>
+                    </form>
+                {% endfor %}
+            </div>
+            {% endif %}
+        </div>
+        {% else %}
+        <!-- 数据库视图提示 -->
+        <div class="db-hint" style="padding: 15px; background: #f8f9fa; border-radius: 4px; border-left: 4px solid #0d6efd;">
+            <div style="font-weight: bold; color: #0d6efd; margin-bottom: 5px;">💡 使用说明</div>
+            <div style="font-size: 13px; color: #495057;">
+                <p>1. 显示数据库中的基因组信息</p>
+                <p>2. <strong>点击Accession字段</strong>跳转到对应文件夹</p>
+                <p>3. 跳转后自动切换到文件视图</p>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- 右侧内容展示区 -->
+    <div class="content" style="flex: 1; position: relative; z-index: 11; margin-left: 20px; min-width: 0;">
+        {% if show_database %}
+            <!-- 数据库内容显示 -->
+            <div style="margin-bottom: 20px;">
+                <h2 style="margin: 0 0 10px 0; color: #212529; display: flex; align-items: center; gap: 10px;">
+                    <span>基因组数据库</span>
+                    <span style="font-size: 13px; color: #0d6efd; background: #e7f3ff; padding: 4px 10px; border-radius: 12px;">
+                        数据库模式
+                    </span>
+                </h2>
+            </div>
+
+            <div class="content-box" style="width: 100%; min-height: 700px; padding: 20px; border: 1px solid #dee2e6; border-radius: 8px; background: white; overflow: auto;">
+                {% if db_html %}
+                    <!-- 使用与search_cold_nac_m4_3h相同的表格容器结构 -->
+                    <div class="table-scroll-wrapper">
+
+                            {{ db_html|safe }}
+
+                    </div>
+                {% else %}
+                    <div style="text-align: center; padding: 50px 20px; color: #6c757d;">
+                        <div style="font-size: 48px; margin-bottom: 20px;">🗃️</div>
+                        <div style="font-size: 16px; margin-bottom: 10px;">暂无数据</div>
+                    </div>
+                {% endif %}
+            </div>
+
+        {% else %}
+            <!-- 文件内容显示 -->
+            <div style="margin-bottom: 20px;">
+                <h2 style="margin: 0 0 10px 0; color: #212529; display: flex; align-items: center; gap: 10px;">
+                    {% if selected_file %}
+                        <span>{{ selected_file }}</span>
+                        <span style="font-size: 13px; color: #28a745; background: #e7f3ff; padding: 4px 10px; border-radius: 12px;">
+                            文件模式
+                        </span>
+                    {% else %}
+                        <span>文件浏览器</span>
+                        <span style="font-size: 13px; color: #28a745; background: #e7f3ff; padding: 4px 10px; border-radius: 12px;">
+                            文件模式
+                        </span>
+                    {% endif %}
+                </h2>
+
+                {% if selected_file %}
+                <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+                    <form method="POST" action="{{ url_for('file_view.file_download') }}">
+                        <input type="hidden" name="current_dir" value="{{ current_dir }}">
+                        <input type="hidden" name="filename" value="{{ selected_file }}">
+                        <button type="submit" style="padding: 6px 12px; background: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer;">
+                            📥 下载
+                        </button>
+                    </form>
+
+                    <form method="POST">
+                        <input type="hidden" name="current_dir" value="{{ current_dir }}">
+                        <input type="hidden" name="selected_file" value="">
+                        <input type="hidden" name="show_database" value="false">
+                        <button type="submit" style="padding: 6px 12px; background: #6c757d; color: white; border: none; border-radius: 4px; cursor: pointer;">
+                            ✕ 清除
+                        </button>
+                    </form>
+                </div>
+                {% endif %}
+            </div>
+
+            <div class="content-box" style="width: 100%; min-height: 700px; padding: 20px; border: 1px solid #dee2e6; border-radius: 8px; background: white; overflow: auto;">
+                {% if file_content %}
+                    {{ file_content|safe }}
+                {% elif selected_file %}
+                    <div style="padding: 20px; color: #dc3545; text-align: center;">
+                        ⚠ 无法读取文件内容
+                    </div>
+                {% else %}
+                    <div style="text-align: center; padding: 50px 20px; color: #6c757d;">
+                        <div style="font-size: 48px; margin-bottom: 20px;">📁</div>
+                        <div style="font-size: 16px; margin-bottom: 10px;">请在左侧选择文件</div>
+                    </div>
+                {% endif %}
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+    <style>
+        /* 表格滚动容器样式 - 与search_cold_nac_m4_3h保持一致 */
+        .table-scroll-wrapper {
+            overflow-x: auto;
+            overflow-y: auto;
+            max-height: 500px;
+            margin: 15px 0;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            border-radius: 6px;
+            padding: 10px;
+        }
+
+        /* 表格样式 - 与search_cold_nac_m4_3h保持一致 */
+        .data-table {
+            width: 100%;
+            min-width: 1200px; /* 确保列数过多时触发横向滚动 */
+            border-collapse: collapse;
+        }
+
+        .data-table th, .data-table td {
+            white-space: nowrap; /* 禁止内容换行 */
+            padding: 12px 15px;
+            border: 1px solid #e8e8e8;
+            text-align: center;
+        }
+
+        .data-table th {
+            background-color: #fafafa;
+            font-weight: bold;
+            position: sticky;
+            top: 0;
+            z-index: 2;
+        }
+
+        /* 原表格样式保留 */
+        .table-style {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 0 0 15px 0;
+            font-size: 14px;
+        }
+        .table-style th, .table-style td {
+            border: 1px solid #dee2e6;
+            padding: 10px 12px;
+            text-align: left;
+        }
+        .table-style th {
+            background-color: #f8f9fa;
+            font-weight: bold;
+            position: sticky;
+            top: 0;
+        }
+        .table-style tr:hover {
+            background-color: #f8f9fa;
+        }
+
+        /* Accession链接样式 */
+        .accession-link {
+            background: none !important;
+            border: none !important;
+            color: #0d6efd !important;
+            text-decoration: underline !important;
+            cursor: pointer !important;
+            padding: 0 !important;
+            font: inherit !important;
+        }
+        .accession-link:hover {
+            color: #dc3545 !important;
+            text-decoration: none !important;
+        }
+
+        /* 提示信息样式 */
+        .tip {
+            margin: 15px 0;
+            padding: 12px 15px;
+            background-color: #e7f3ff;
+            border-radius: 4px;
+            color: #0c63e4;
+            font-size: 13px;
+        }
+        .error-tip {
+            margin: 15px 0;
+            padding: 12px 15px;
+            background-color: #f8d7da;
+            border-radius: 4px;
+            color: #721c24;
+            font-size: 13px;
+        }
+
+        /* 按钮悬停效果 */
+        .dir-item:hover {
+            background: #d0e2ff !important;
+        }
+        .file-item:hover {
+            background: #f8f9fa !important;
+        }
+        .view-btn:hover {
+            opacity: 0.9;
+        }
+        .back-btn:hover {
+            background: #0b5ed7 !important;
+        }
+
+        /* 响应式适配 */
+        @media (max-width: 768px) {
+            .file-explorer-container {
+                flex-direction: column;
+            }
+            .sidebar {
+                width: 100%;
+                margin-bottom: 20px;
+            }
+            .content {
+                margin-left: 0;
+            }
+
+            .table-scroll-wrapper {
+                margin: 10px 0 20px;
+                padding: 5px;
+            }
+
+            .data-table th, .data-table td {
+                padding: 8px 10px;
+                font-size: 12px;
+            }
+        }
+    </style>
+{% endblock %}

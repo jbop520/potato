@@ -1,0 +1,211 @@
+{% extends "test.html" %}
+
+{% block title %}Genomics ID 数据查询{% endblock %}
+
+{% block content %}
+<style>
+    /* 基础布局样式 */
+    .content-container {
+        padding: 20px;
+        max-width: 100%;
+        box-sizing: border-box;
+    }
+
+    /* 同源基因区域样式 */
+    .homology-container {
+        margin: 15px 0;
+        padding: 10px;
+        border-radius: 4px;
+        background-color: #f0f7ff;
+    }
+
+    .homology-label {
+        font-weight: bold;
+        color: #1890ff;
+        margin-right: 10px;
+        display: inline-block;
+        min-width: 100px;
+    }
+
+    .homology-btn {
+        margin: 0 5px 5px;
+        padding: 6px 12px;
+        background-color: #2563eb;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        text-decoration: none;
+        display: inline-block;
+    }
+
+    .homology-btn:hover {
+        background-color: #1d4ed8;
+        color: white;
+    }
+
+    /* 表格滚动容器 - 核心滑动功能 */
+    .table-scroll-wrapper {
+        overflow-x: auto;
+        overflow-y: auto;
+        max-height: 500px;
+        margin: 15px 0;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        border-radius: 6px;
+        padding: 10px;
+    }
+
+    /* 表格样式 */
+    .data-table {
+        width: 100%;
+        min-width: 1200px; /* 保证小屏幕也能横向滑动 */
+        border-collapse: collapse;
+    }
+
+    .data-table th, .data-table td {
+        white-space: nowrap; /* 禁止单元格内容换行 */
+        padding: 12px 15px;
+        border: 1px solid #e8e8e8;
+        text-align: center;
+    }
+
+    .data-table th {
+        background-color: #fafafa;
+        font-weight: bold;
+        position: sticky; /* 表头固定 */
+        top: 0;
+        z-index: 2;
+    }
+
+    /* 标题和空数据样式 */
+    .section-title {
+        margin: 25px 0 10px;
+        color: #1890ff;
+        font-size: 18px;
+        font-weight: bold;
+        border-bottom: 1px solid #e8e8e8;
+        padding-bottom: 5px;
+    }
+
+    .empty {
+        margin: 20px 0;
+        color: #666;
+        font-size: 16px;
+    }
+
+    /* 查询表单样式 */
+    .search-form {
+        margin: 20px 0;
+    }
+
+    .search-form input {
+        padding: 8px 12px;
+        width: 400px;
+        max-width: 100%;
+        border: 1px solid #e8e8e8;
+        border-radius: 4px;
+        margin-right: 10px;
+        font-size: 16px;
+    }
+
+    .search-form button {
+        padding: 8px 20px;
+        background-color: #1890ff;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 16px;
+    }
+
+    .search-form button:hover {
+        background-color: #096dd9;
+    }
+
+    /* 响应式适配 */
+    @media (max-width: 768px) {
+        .search-form input {
+            width: 100%;
+            margin-right: 0;
+            margin-bottom: 10px;
+        }
+
+        .search-form button {
+            width: 100%;
+        }
+
+        .table-scroll-wrapper {
+            margin: 10px 0 20px;
+            padding: 5px;
+            max-height: 400px;
+        }
+
+        .data-table th, .data-table td {
+            padding: 8px 10px;
+            font-size: 12px;
+        }
+    }
+</style>
+
+<div class="content-container">
+    <h1>Genomics ID Searching</h1>
+
+    <!-- 查询表单 -->
+    <form class="search-form" method="get" action="{{ url_for('genomics_id_search_bp.index') }}">
+        <input name="q" type="text" placeholder="Enter Gene ID to search" value="{{ q|e }}" autofocus />
+        <button type="submit">Search</button>
+    </form>
+
+    <!-- 空数据提示 -->
+    {% if q and not results %}
+        <div class="empty">没有找到与 "<b>{{ q|e }}</b>" 匹配的基因注释记录。</div>
+    {% endif %}
+
+    <!-- 同源基因按钮区域 -->
+    {% if q %}
+        <div class="homology-container">
+            <span class="homology-label">Homologous Genes：</span>
+            {% if homologous_genes and homologous_genes|length > 0 %}
+                {% for gene in homologous_genes %}
+                    <form id="homologyForm_{{ loop.index }}" method="get" action="{{ url_for('genomics_id_search_bp.index') }}" style="display: inline;">
+                        <input type="hidden" name="q" value="{{ gene|e }}" />
+                    </form>
+                    <button class="homology-btn" onclick="document.getElementById('homologyForm_{{ loop.index }}').submit()">
+                        {{ gene }}
+                    </button>
+                {% endfor %}
+            {% else %}
+                <span style="color: #666;">无同源基因数据</span>
+            {% endif %}
+        </div>
+    {% endif %}
+
+    <!-- 基因注释表格数据渲染（带滑动功能） -->
+    {% if results %}
+        <div class="section-title">Gene Annotation Results</div>
+        {% for table_name, rows in results %}
+            <div><span style="font-weight: bold; color: #666;">{{ table_name }}</span></div>
+            {% for row in rows %}
+                <div class="table-scroll-wrapper">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                {% for key in row.keys() %}
+                                    <th>{{ key }}</th>
+                                {% endfor %}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                {% for value in row.values() %}
+                                    <td>{{ value }}</td>
+                                {% endfor %}
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            {% endfor %}
+        {% endfor %}
+    {% endif %}
+</div>
+{% endblock %}

@@ -1,5 +1,8 @@
 from flask import Flask
 from .config import Config
+from .routes.Genomics_ID_search import genomics_id_search_bp
+from .routes.Genomics_Key_search import genomics_key_search_bp
+from .routes.file_view import file_view_bp
 from .routes.index import index_bp
 from .routes.search import search_bp
 from .routes.search1 import search2_bp
@@ -45,4 +48,7 @@ def create_app():
     app.register_blueprint(search_salt_48h_bp, url_prefix='/search_salt_48h_bp')
     app.register_blueprint(search_id_transcriptomics_bp, url_prefix='/search_id_transcriptomics_bp')
 
+    app.register_blueprint(file_view_bp)
+    app.register_blueprint(genomics_id_search_bp, url_prefix='/genomics_id_search_bp')
+    app.register_blueprint(genomics_key_search_bp, url_prefix='/genomics_key_search_bp')
     return app

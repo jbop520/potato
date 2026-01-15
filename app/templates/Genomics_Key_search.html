@@ -1,0 +1,161 @@
+{% extends "test.html" %}
+
+{% block title %}Genomics Key Search{% endblock %}
+
+{% block content %}
+<style>
+    /* 通用样式 */
+    .content-container {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 20px;
+    }
+    .search-form {
+        margin: 20px 0;
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        align-items: center;
+    }
+    .search-form input {
+        padding: 8px 12px;
+        border: 1px solid #e8e8e8;
+        border-radius: 4px;
+        min-width: 150px;
+    }
+    .search-form button {
+        padding: 8px 20px;
+        background-color: #2563eb;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+    }
+    .search-form button:hover {
+        background-color: #1d4ed8;
+    }
+    /* 错误提示 */
+    .error-msg {
+        color: #dc2626;
+        padding: 10px;
+        background-color: #fef2f2;
+        border-radius: 4px;
+        margin: 10px 0;
+    }
+    /* 表格容器 */
+    .table-scroll-wrapper {
+        overflow-x: auto;
+        overflow-y: auto;
+        max-height: 600px;
+        margin: 15px 0;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        border-radius: 6px;
+        padding: 10px;
+    }
+    /* 表格样式 */
+    .data-table {
+        width: 100%;
+        min-width: 1200px;
+        border-collapse: collapse;
+    }
+    .data-table th, .data-table td {
+        white-space: nowrap;
+        padding: 12px 15px;
+        border: 1px solid #e8e8e8;
+        text-align: center;
+    }
+    .data-table th {
+        background-color: #fafafa;
+        font-weight: bold;
+        position: sticky;
+        top: 0;
+        z-index: 2;
+    }
+    /* 结果标题 */
+    .result-title {
+        margin: 25px 0 10px;
+        color: #1890ff;
+        font-size: 18px;
+        font-weight: bold;
+        border-bottom: 1px solid #e8e8e8;
+        padding-bottom: 5px;
+    }
+    /* 空结果提示 */
+    .empty-result {
+        padding: 20px;
+        text-align: center;
+        color: #666;
+        background-color: #f9f9f9;
+        border-radius: 4px;
+        margin: 20px 0;
+    }
+
+    /* 响应式适配 */
+    @media (max-width: 768px) {
+        .search-form {
+            flex-direction: column;
+            align-items: stretch;
+        }
+        .data-table th, .data-table td {
+            padding: 8px 10px;
+            font-size: 12px;
+        }
+        .table-scroll-wrapper {
+            max-height: 400px;
+            padding: 5px;
+        }
+    }
+</style>
+
+<div class="content-container">
+    <h1>Genomics Key Search (Chromosome & Position)</h1>
+
+    <!-- 搜索表单 -->
+    <form class="search-form" method="get" action="{{ url_for('genomics_key_search_bp.index') }}">
+        <input type="text" name="chromosome" placeholder="Enter Chromosome (e.g. chr1)" value="{{ chromosome|e }}" required>
+        <input type="number" name="start" placeholder="Start Position" value="{{ start|e }}" required>
+        <input type="number" name="end" placeholder="End Position" value="{{ end|e }}" required>
+        <button type="submit">Search</button>
+    </form>
+
+    <!-- 错误提示 -->
+    {% if error_msg %}
+        <div class="error-msg">{{ error_msg }}</div>
+    {% endif %}
+
+    <!-- 结果展示区域 -->
+    {% if chromosome and start and end and not error_msg %}
+        {% if results %}
+            {% for table_name, rows in results %}
+                <div class="result-title">{{ table_name }}</div>
+                <div class="table-scroll-wrapper">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                {% if rows %}
+                                    {% for key in rows[0].keys() %}
+                                        <th>{{ key }}</th>
+                                    {% endfor %}
+                                {% endif %}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for row in rows %}
+                                <tr>
+                                    {% for value in row.values() %}
+                                        <td>{{ value }}</td>
+                                    {% endfor %}
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% endfor %}
+        {% else %}
+            <div class="empty-result">
+                未找到染色体 <b>{{ chromosome }}</b> 上 {{ start }} - {{ end }} 区间内的注释数据
+            </div>
+        {% endif %}
+    {% endif %}
+</div>
+{% endblock %}
