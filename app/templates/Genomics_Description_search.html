@@ -1,0 +1,167 @@
+{% extends "test.html" %}
+
+{% block title %}Genomics Description 数据查询{% endblock %}
+
+{% block content %}
+<style>
+    .content-container {
+        padding: 20px;
+        max-width: 100%;
+        box-sizing: border-box;
+    }
+
+    /* 查询表单 */
+    .search-form {
+        margin: 20px 0;
+    }
+
+    .search-form input {
+        padding: 8px 12px;
+        width: 450px;
+        max-width: 100%;
+        border: 1px solid #e8e8e8;
+        border-radius: 4px;
+        margin-right: 10px;
+        font-size: 16px;
+    }
+
+    .search-form button {
+        padding: 8px 20px;
+        background-color: #1890ff;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 16px;
+    }
+
+    .search-form button:hover {
+        background-color: #096dd9;
+    }
+
+    /* 表格区域 */
+    .section-title {
+        margin: 25px 0 10px;
+        color: #1890ff;
+        font-size: 18px;
+        font-weight: bold;
+        border-bottom: 1px solid #e8e8e8;
+        padding-bottom: 5px;
+    }
+
+    .table-scroll-wrapper {
+        overflow-x: auto;
+        overflow-y: auto;
+        max-height: 500px;
+        margin: 15px 0 30px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        border-radius: 6px;
+        padding: 10px;
+    }
+
+    .data-table {
+        width: 100%;
+        min-width: 1200px;
+        border-collapse: collapse;
+    }
+
+    .data-table th,
+    .data-table td {
+        white-space: nowrap;
+        padding: 12px 15px;
+        border: 1px solid #e8e8e8;
+        text-align: left;
+        font-size: 14px;
+    }
+
+    .data-table th {
+        background-color: #fafafa;
+        font-weight: bold;
+        position: sticky;
+        top: 0;
+        z-index: 2;
+    }
+
+    .empty {
+        margin: 30px 0;
+        color: #666;
+        font-size: 16px;
+    }
+
+    @media (max-width: 768px) {
+        .search-form input {
+            width: 100%;
+            margin-bottom: 10px;
+        }
+
+        .search-form button {
+            width: 100%;
+        }
+
+        .data-table th,
+        .data-table td {
+            font-size: 12px;
+            padding: 8px 10px;
+        }
+    }
+</style>
+
+<div class="content-container">
+    <h1>Genomics Description Searching</h1>
+
+    <!-- 查询表单 -->
+    <form class="search-form"
+          method="get"
+          action="{{ url_for('genomics_description_search_bp.index') }}">
+        <input
+            name="q"
+            type="text"
+            placeholder="Enter keyword in Description (e.g. kinase, transcription factor)"
+            value="{{ q|e }}"
+            autofocus
+        />
+        <button type="submit">Search</button>
+    </form>
+
+    <!-- 空结果提示 -->
+    {% if q and not results %}
+        <div class="empty">
+            没有找到 Description 包含
+            <b>"{{ q|e }}"</b>
+            的基因注释记录。
+        </div>
+    {% endif %}
+
+    <!-- 结果展示 -->
+    {% if results %}
+        <div class="section-title">Gene Annotation Results (Description LIKE "%{{ q|e }}%")</div>
+
+        {% for table_name, rows in results %}
+            <div style="margin: 10px 0; font-weight: bold; color: #555;">
+                Table: {{ table_name }}
+            </div>
+
+            <div class="table-scroll-wrapper">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            {% for key in rows[0].keys() %}
+                                <th>{{ key }}</th>
+                            {% endfor %}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for row in rows %}
+                            <tr>
+                                {% for value in row.values() %}
+                                    <td>{{ value }}</td>
+                                {% endfor %}
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% endfor %}
+    {% endif %}
+</div>
+{% endblock %}

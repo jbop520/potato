@@ -77,6 +77,105 @@
         z-index: 2;
     }
 
+    /* 序列展示样式 */
+    .sequence-container {
+        margin: 15px 0;
+        border: 1px solid #e8e8e8;
+        border-radius: 6px;
+        overflow: hidden;
+    }
+
+    .sequence-header {
+        background-color: #f5f5f5;
+        padding: 12px 15px;
+        font-weight: bold;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        cursor: pointer;
+        user-select: none;
+    }
+
+    .sequence-header:hover {
+        background-color: #e8e8e8;
+    }
+
+    .sequence-header .toggle-icon {
+        font-size: 18px;
+        transition: transform 0.3s;
+    }
+
+    .sequence-header.collapsed .toggle-icon {
+        transform: rotate(90deg);
+    }
+
+    .sequence-content {
+        padding: 15px;
+        background-color: #fff;
+        display: block;
+    }
+
+    .sequence-content.collapsed {
+        display: none;
+    }
+
+    .sequence-info {
+        margin-bottom: 10px;
+        font-size: 14px;
+        color: #666;
+    }
+
+    .sequence-info span {
+        margin-right: 15px;
+    }
+
+    .sequence-text {
+        font-family: 'Courier New', monospace;
+        background-color: #f8f9fa;
+        padding: 15px;
+        border-radius: 4px;
+        border: 1px solid #e9ecef;
+        white-space: pre-wrap;
+        word-wrap: break-word;
+        max-height: 400px;
+        overflow-y: auto;
+        line-height: 1.4;
+        font-size: 14px;
+    }
+
+    .sequence-type {
+        padding: 4px 8px;
+        border-radius: 4px;
+        font-size: 12px;
+        font-weight: bold;
+        margin-right: 10px;
+    }
+
+    .cds-type {
+        background-color: #e3f2fd;
+        color: #1565c0;
+    }
+
+    .protein-type {
+        background-color: #f3e5f5;
+        color: #7b1fa2;
+    }
+
+    .copy-btn {
+        margin-left: 10px;
+        padding: 4px 8px;
+        background-color: #6c757d;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 12px;
+    }
+
+    .copy-btn:hover {
+        background-color: #5a6268;
+    }
+
     /* 标题和空数据样式 */
     .section-title {
         margin: 25px 0 10px;
@@ -144,6 +243,16 @@
             padding: 8px 10px;
             font-size: 12px;
         }
+
+        .sequence-text {
+            font-size: 12px;
+            padding: 10px;
+        }
+
+        .sequence-header {
+            padding: 10px;
+            font-size: 14px;
+        }
     }
 </style>
 
@@ -152,17 +261,33 @@
 
     <!-- 查询表单 -->
     <form class="search-form" method="get" action="{{ url_for('genomics_id_search_bp.index') }}">
-        <input name="q" type="text" placeholder="Enter Gene ID to search" value="{{ q|e }}" autofocus />
+        <input name="q" type="text" placeholder="Enter Gene ID to search(e.g：DM8C10G09900)" value="{{ q|e }}" autofocus />
         <button type="submit">Search</button>
     </form>
 
     <!-- 空数据提示 -->
-    {% if q and not results %}
-        <div class="empty">没有找到与 "<b>{{ q|e }}</b>" 匹配的基因注释记录。</div>
+    {% if q and not results and not sequence_data %}
+        <!-- 跳转转录组搜索按钮 -->
+        <div style="margin: 15px 0;">
+            <a href="{{ url_for('search_id_transcriptomics_bp.index', q=q) }}"
+               class="homology-btn"
+               style="background-color:#16a34a;">
+                🔍 Search Transcriptomics Stress for {{ q }}
+            </a>
+        </div>
+        <div class="empty">没有找到与 "<b>{{ q|e }}</b>" 匹配的基因注释记录或序列数据。</div>
     {% endif %}
 
     <!-- 同源基因按钮区域 -->
     {% if q %}
+    <!-- 跳转转录组搜索按钮 -->
+        <div style="margin: 15px 0;">
+            <a href="{{ url_for('search_id_transcriptomics_bp.index', q=q) }}"
+               class="homology-btn"
+               style="background-color:#16a34a;">
+                🔍 Search Transcriptomics Stress for {{ q }}
+            </a>
+        </div>
         <div class="homology-container">
             <span class="homology-label">Homologous Genes：</span>
             {% if homologous_genes and homologous_genes|length > 0 %}
@@ -179,6 +304,90 @@
             {% endif %}
         </div>
     {% endif %}
+
+    <!-- 序列数据展示 -->
+    {% if sequence_data %}
+<div class="section-title">Gene Sequences</div>
+
+{% for species, sequences in sequence_data.items() %}
+
+    <!-- ================= CDS ================= -->
+    {% if sequences.cds %}
+        {% for cds in sequences.cds %}
+        <div class="sequence-container">
+            <div class="sequence-header collapsed"
+                 onclick="toggleSequence('{{ species }}_cds_{{ loop.index }}')">
+                <div>
+                    <span class="sequence-type cds-type">CDS</span>
+                    <strong>{{ cds.seq_id }}</strong>
+                </div>
+                <div>
+                    <span style="color:#666;font-size:14px;">
+                        Length: {{ cds.length }} bp
+                    </span>
+                    <span class="toggle-icon">▶</span>
+                </div>
+            </div>
+
+            <div id="{{ species }}_cds_{{ loop.index }}"
+                 class="sequence-content collapsed">
+                <div class="sequence-info">
+                    <span>Species: {{ species }}</span>
+                    <span>Table: {{ cds.table_name }}</span>
+                    <span>Header: {{ cds.header }}</span>
+                    <button class="copy-btn"
+                            onclick="copyToClipboard('{{ species }}_cds_seq_{{ loop.index }}')">
+                        Copy
+                    </button>
+                </div>
+
+                <div id="{{ species }}_cds_seq_{{ loop.index }}"
+                     class="sequence-text">{{ cds.sequence }}</div>
+            </div>
+        </div>
+        {% endfor %}
+    {% endif %}
+
+    <!-- ================= Protein ================= -->
+    {% if sequences.protein %}
+        {% for protein in sequences.protein %}
+        <div class="sequence-container">
+            <div class="sequence-header collapsed"
+                 onclick="toggleSequence('{{ species }}_protein_{{ loop.index }}')">
+                <div>
+                    <span class="sequence-type protein-type">Protein</span>
+                    <strong>{{ protein.seq_id }}</strong>
+                </div>
+                <div>
+                    <span style="color:#666;font-size:14px;">
+                        Length: {{ protein.length }} aa
+                    </span>
+                    <span class="toggle-icon">▶</span>
+                </div>
+            </div>
+
+            <div id="{{ species }}_protein_{{ loop.index }}"
+                 class="sequence-content collapsed">
+                <div class="sequence-info">
+                    <span>Species: {{ species }}</span>
+                    <span>Table: {{ protein.table_name }}</span>
+                    <span>Header: {{ protein.header }}</span>
+                    <button class="copy-btn"
+                            onclick="copyToClipboard('{{ species }}_protein_seq_{{ loop.index }}')">
+                        Copy
+                    </button>
+                </div>
+
+                <div id="{{ species }}_protein_seq_{{ loop.index }}"
+                     class="sequence-text">{{ protein.sequence }}</div>
+            </div>
+        </div>
+        {% endfor %}
+    {% endif %}
+
+{% endfor %}
+{% endif %}
+
 
     <!-- 基因注释表格数据渲染（带滑动功能） -->
     {% if results %}
@@ -208,4 +417,69 @@
         {% endfor %}
     {% endif %}
 </div>
+
+<script>
+    // 切换序列显示/隐藏
+    function toggleSequence(sequenceId) {
+        const content = document.getElementById(sequenceId);
+        const header = content.previousElementSibling;
+
+        content.classList.toggle('collapsed');
+        header.classList.toggle('collapsed');
+
+        // 更新箭头方向
+        const toggleIcon = header.querySelector('.toggle-icon');
+        if (content.classList.contains('collapsed')) {
+            toggleIcon.textContent = '▶';
+        } else {
+            toggleIcon.textContent = '▼';
+        }
+    }
+
+    // 复制序列到剪贴板
+    function copyToClipboard(elementId) {
+        const sequenceElement = document.getElementById(elementId);
+        const sequenceText = sequenceElement.textContent;
+
+        // 创建临时textarea元素
+        const tempTextArea = document.createElement('textarea');
+        tempTextArea.value = sequenceText;
+        document.body.appendChild(tempTextArea);
+        tempTextArea.select();
+
+        try {
+            const successful = document.execCommand('copy');
+            if (successful) {
+                alert('Sequence copied to clipboard!');
+            } else {
+                alert('Failed to copy sequence. Please try again.');
+            }
+        } catch (err) {
+            console.error('Copy failed:', err);
+            alert('Copy failed. Please select and copy manually.');
+        }
+
+        document.body.removeChild(tempTextArea);
+    }
+
+    // 展开所有序列（可选功能）
+    function expandAllSequences() {
+        document.querySelectorAll('.sequence-content.collapsed').forEach(content => {
+            content.classList.remove('collapsed');
+            const header = content.previousElementSibling;
+            header.classList.remove('collapsed');
+            header.querySelector('.toggle-icon').textContent = '▼';
+        });
+    }
+
+    // 折叠所有序列（可选功能）
+    function collapseAllSequences() {
+        document.querySelectorAll('.sequence-content:not(.collapsed)').forEach(content => {
+            content.classList.add('collapsed');
+            const header = content.previousElementSibling;
+            header.classList.add('collapsed');
+            header.querySelector('.toggle-icon').textContent = '▶';
+        });
+    }
+</script>
 {% endblock %}

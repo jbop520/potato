@@ -150,7 +150,16 @@
     <input name="q" type="text" placeholder="Enter Transcript_ID to search" value="{{ q|e }}" autofocus />
     <button type="submit">Search</button>
 </form>
-
+{% if q %}
+    <!-- 跳转到基因组ID搜索按钮 -->
+    <div style="margin: 15px 0;">
+        <a href="{{ url_for('genomics_id_search_bp.index', q=q) }}"
+           class="associate-btn"
+           style="background-color:#16a34a;">
+            🧬 Search Genomics Annotation for {{ q }}
+        </a>
+    </div>
+{% endif %}
 {% if q and not results and not transcriptomics_results %}
     <div class="empty">没有找到与 "<b>{{ q|e }}</b>" 匹配的记录。</div>
 {% endif %}

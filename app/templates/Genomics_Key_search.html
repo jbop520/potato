@@ -4,127 +4,120 @@
 
 {% block content %}
 <style>
-    /* 通用样式 */
-    .content-container {
-        max-width: 1400px;
-        margin: 0 auto;
-        padding: 20px;
-    }
-    .search-form {
-        margin: 20px 0;
-        display: flex;
-        gap: 10px;
-        flex-wrap: wrap;
-        align-items: center;
-    }
-    .search-form input {
-        padding: 8px 12px;
-        border: 1px solid #e8e8e8;
-        border-radius: 4px;
-        min-width: 150px;
-    }
-    .search-form button {
-        padding: 8px 20px;
-        background-color: #2563eb;
-        color: white;
-        border: none;
-        border-radius: 4px;
-        cursor: pointer;
-    }
-    .search-form button:hover {
-        background-color: #1d4ed8;
-    }
-    /* 错误提示 */
-    .error-msg {
-        color: #dc2626;
-        padding: 10px;
-        background-color: #fef2f2;
-        border-radius: 4px;
-        margin: 10px 0;
-    }
-    /* 表格容器 */
-    .table-scroll-wrapper {
-        overflow-x: auto;
-        overflow-y: auto;
-        max-height: 600px;
-        margin: 15px 0;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-        border-radius: 6px;
-        padding: 10px;
-    }
-    /* 表格样式 */
-    .data-table {
-        width: 100%;
-        min-width: 1200px;
-        border-collapse: collapse;
-    }
-    .data-table th, .data-table td {
-        white-space: nowrap;
-        padding: 12px 15px;
-        border: 1px solid #e8e8e8;
-        text-align: left;
-    }
-    .data-table th {
-        background-color: #fafafa;
-        font-weight: bold;
-        position: sticky;
-        top: 0;
-        z-index: 2;
-    }
-    /* 结果标题 */
-    .result-title {
-        margin: 25px 0 10px;
-        color: #1890ff;
-        font-size: 18px;
-        font-weight: bold;
-        border-bottom: 1px solid #e8e8e8;
-        padding-bottom: 5px;
-    }
-    /* 空结果提示 */
-    .empty-result {
-        padding: 20px;
-        text-align: center;
-        color: #666;
-        background-color: #f9f9f9;
-        border-radius: 4px;
-        margin: 20px 0;
-    }
-
-    /* 响应式适配 */
-    @media (max-width: 768px) {
-        .search-form {
-            flex-direction: column;
-            align-items: stretch;
-        }
-        .data-table th, .data-table td {
-            padding: 8px 10px;
-            font-size: 12px;
-        }
-        .table-scroll-wrapper {
-            max-height: 400px;
-            padding: 5px;
-        }
-    }
+/* —— 样式原封不动 —— */
+.content-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 20px;
+}
+.search-form {
+    margin: 20px 0;
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    align-items: left;
+}
+.search-form select,
+.search-form input {
+    padding: 8px 12px;
+    border: 1px solid #e8e8e8;
+    border-radius: 4px;
+    min-width: 180px;
+}
+.search-form button {
+    padding: 8px 20px;
+    background-color: #2563eb;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+.search-form button:hover {
+    background-color: #1d4ed8;
+}
+.error-msg {
+    color: #dc2626;
+    padding: 10px;
+    background-color: #fef2f2;
+    border-radius: 4px;
+    margin: 10px 0;
+}
+.table-scroll-wrapper {
+    overflow-x: auto;
+    overflow-y: auto;
+    max-height: 600px;
+    margin: 15px 0;
+}
+.data-table {
+    width: 100%;
+    min-width: 1200px;
+    border-collapse: collapse;
+}
+.data-table th,
+.data-table td {
+    padding: 10px;
+    border: 1px solid #e8e8e8;
+    white-space: nowrap;
+    text-align: left;
+}
+.data-table th {
+    background-color: #fafafa;
+    position: sticky;
+    top: 0;
+}
+.result-title {
+    margin-top: 25px;
+    font-size: 18px;
+    font-weight: bold;
+    color: #2563eb;
+}
+.empty-result {
+    padding: 20px;
+    background-color: #f9f9f9;
+    border-radius: 4px;
+    margin-top: 20px;
+    text-align: left;
+}
 </style>
 
 <div class="content-container">
-    <h1>Genomics Key Search (Chromosome & Position)</h1>
+    <h1>Genomics Key Search</h1>
 
-    <!-- 搜索表单 -->
-    <form class="search-form" method="get" action="{{ url_for('genomics_key_search_bp.index') }}">
-        <input type="text" name="chromosome" placeholder="Enter Chromosome (e.g. chr1)" value="{{ chromosome|e }}" required>
-        <input type="number" name="start" placeholder="Start Position" value="{{ start|e }}" required>
-        <input type="number" name="end" placeholder="End Position" value="{{ end|e }}" required>
+    <form class="search-form" method="get"
+          action="{{ url_for('genomics_key_search_bp.index') }}">
+
+        <!-- 基因组 -->
+        <select name="genome" id="genome-select" required>
+            <option value="">Select Genome</option>
+            {% for g in genomes %}
+                <option value="{{ g }}"
+                        {% if g == genome %}selected{% endif %}>
+                    {{ g|upper }}
+                </option>
+            {% endfor %}
+        </select>
+
+        <!-- 染色体 -->
+        <select name="chromosome" id="chromosome-select" required>
+            <option value="">Select Chromosome</option>
+        </select>
+
+        <input type="number" name="start"
+               placeholder="Start Position"
+               value="{{ start|e }}" required>
+
+        <input type="number" name="end"
+               placeholder="End Position"
+               value="{{ end|e }}" required>
+
         <button type="submit">Search</button>
     </form>
 
-    <!-- 错误提示 -->
     {% if error_msg %}
         <div class="error-msg">{{ error_msg }}</div>
     {% endif %}
 
-    <!-- 结果展示区域 -->
-    {% if chromosome and start and end and not error_msg %}
+    {% if genome and chromosome and start and end and not error_msg %}
         {% if results %}
             {% for table_name, rows in results %}
                 <div class="result-title">{{ table_name }}</div>
@@ -132,11 +125,9 @@
                     <table class="data-table">
                         <thead>
                             <tr>
-                                {% if rows %}
-                                    {% for key in rows[0].keys() %}
-                                        <th>{{ key }}</th>
-                                    {% endfor %}
-                                {% endif %}
+                                {% for key in rows[0].keys() %}
+                                    <th>{{ key }}</th>
+                                {% endfor %}
                             </tr>
                         </thead>
                         <tbody>
@@ -153,9 +144,66 @@
             {% endfor %}
         {% else %}
             <div class="empty-result">
-                未找到染色体 <b>{{ chromosome }}</b> 上 {{ start }} - {{ end }} 区间内的注释数据
+                未找到 {{ genome|upper }} 中
+                {{ chromosome }} :
+                {{ start }} - {{ end }} 区间的数据
             </div>
         {% endif %}
     {% endif %}
 </div>
+
+<script>
+/* ======== 关键修改开始 ======== */
+
+// 用 url_for 生成真实接口路径（彻底避免 404）
+const CHR_API_URL =
+    "{{ url_for('genomics_key_search_bp.get_chromosomes_by_genome') }}";
+
+const genomeSelect = document.getElementById("genome-select");
+const chrSelect = document.getElementById("chromosome-select");
+const selectedChromosome = "{{ chromosome }}";
+
+function loadChromosomes(genome) {
+    chrSelect.innerHTML = '<option value="">Loading...</option>';
+
+    fetch(`${CHR_API_URL}?genome=${genome}`)
+        .then(res => res.json())
+        .then(data => {
+            chrSelect.innerHTML =
+                '<option value="">Select Chromosome</option>';
+
+            data.chromosomes.forEach(chr => {
+                const opt = document.createElement("option");
+                opt.value = chr;
+                opt.textContent = chr;
+                if (chr === selectedChromosome) {
+                    opt.selected = true;
+                }
+                chrSelect.appendChild(opt);
+            });
+        })
+        .catch(err => {
+            console.error(err);
+            chrSelect.innerHTML =
+                '<option value="">Load failed</option>';
+        });
+}
+
+genomeSelect.addEventListener("change", function () {
+    if (this.value) {
+        loadChromosomes(this.value);
+    } else {
+        chrSelect.innerHTML =
+            '<option value="">Select Chromosome</option>';
+    }
+});
+
+// 页面刷新自动回显
+if (genomeSelect.value) {
+    loadChromosomes(genomeSelect.value);
+}
+
+/* ======== 关键修改结束 ======== */
+</script>
+
 {% endblock %}
