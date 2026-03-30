@@ -161,6 +161,16 @@
         color: #7b1fa2;
     }
 
+    .upstream-type {
+        background-color: #e8f5e9;
+        color: #2e7d32;
+    }
+
+    .downstream-type {
+        background-color: #fff3e0;
+        color: #f57c00;
+    }
+
     .copy-btn {
         margin-left: 10px;
         padding: 4px 8px;
@@ -266,7 +276,7 @@
     </form>
 
     <!-- 空数据提示 -->
-    {% if q and not results and not sequence_data %}
+    {% if q and not results and not sequence_data and not up_down_data %}
         <!-- 跳转转录组搜索按钮 -->
         <div style="margin: 15px 0;">
             <a href="{{ url_for('search_id_transcriptomics_bp.index', q=q) }}"
@@ -385,9 +395,55 @@
         {% endfor %}
     {% endif %}
 
+    <!-- ================= up_2kb 和 down_1kb (从基因组截取) ================= -->
+    {% if up_down_data and species in up_down_data %}
+        <!-- 从基因组截取的up/down序列 -->
+        {% if up_down_data[species].genome_updown %}
+            {% for item in up_down_data[species].genome_updown %}
+            <div class="sequence-container">
+                <div class="sequence-header collapsed"
+                     onclick="toggleSequence('{{ species }}_{{ item.type }}_{{ loop.index }}')">
+                    <div>
+                        {% if item.type == 'up_2kb' %}
+                            <span class="sequence-type upstream-type">up_2kb</span>
+                        {% else %}
+                            <span class="sequence-type downstream-type">down_1kb</span>
+                        {% endif %}
+                        <strong>{{ item.gene_id }}</strong>
+                    </div>
+                    <div>
+                        <span style="color:#666;font-size:14px;">
+                            {{ item.display_name }} | Region: {{ item.region }} | Length: {{ item.length }} bp | Strand: {{ item.strand }}
+                        </span>
+                        <span class="toggle-icon">▶</span>
+                    </div>
+                </div>
+
+                <div id="{{ species }}_{{ item.type }}_{{ loop.index }}"
+                     class="sequence-content collapsed">
+                    <div class="sequence-info">
+                        <span>Species: {{ species }}</span>
+                        <span>Source: Genome ({{ item.table_name }})</span>
+                        <span>Chromosome: {{ item.chromosome }}</span>
+                        <span>Region: {{ item.region }}</span>
+                        <span>Strand: {{ item.strand }}</span>
+                        <span>Length: {{ item.length }} bp</span>
+                        <button class="copy-btn"
+                                onclick="copyToClipboard('{{ species }}_{{ item.type }}_seq_{{ loop.index }}')">
+                            Copy
+                        </button>
+                    </div>
+
+                    <div id="{{ species }}_{{ item.type }}_seq_{{ loop.index }}"
+                         class="sequence-text">{{ item.sequence }}</div>
+                </div>
+            </div>
+            {% endfor %}
+        {% endif %}
+    {% endif %}
+
 {% endfor %}
 {% endif %}
-
 
     <!-- 基因注释表格数据渲染（带滑动功能） -->
     {% if results %}

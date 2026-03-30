@@ -99,7 +99,7 @@ def create_line_chart(results):
     return None
 
 
-def create_heatmap(results):
+#def create_heatmap(results):
     try:
         if results and len(results) > 0 and len(results[0][1]) > 0:
             heatmap_data = []
@@ -163,6 +163,113 @@ def create_heatmap(results):
                         ),
                     )
                 )
+                return heatmap.render_embed()
+    except Exception as e:
+        current_app.logger.error(f"生成热力图失败: {str(e)}")
+    return None
+
+import math
+
+
+def create_heatmap(results):
+    """生成热力图，使用Log2转换提高区分度"""
+
+    try:
+        if results and len(results) > 0 and len(results[0][1]) > 0:
+            heatmap_data = []
+            data_rows = results[0][1][:5]
+
+            numeric_keys = []
+            for row in data_rows:
+                for k, v in row.items():
+                    try:
+                        float(v)
+                        if k not in numeric_keys:
+                            numeric_keys.append(k)
+                    except (ValueError, TypeError):
+                        continue
+                if len(numeric_keys) >= 10:
+                    break
+
+            if len(numeric_keys) >= 1 and len(data_rows) >= 1:
+                # 收集所有转换后的值以计算最小值和最大值
+                transformed_values = []
+
+                for y, row in enumerate(data_rows):
+                    for x, key in enumerate(numeric_keys):
+                        try:
+                            original_value = float(row.get(key, 0))
+
+                            # Log2转换处理
+                            if original_value > 0:
+                                transformed_value = math.log2(original_value)
+                            else:
+                                transformed_value = 0  # 0或负值处理为0
+
+                            heatmap_data.append([x, y, transformed_value])
+                            transformed_values.append(transformed_value)
+
+                        except (ValueError, TypeError, OverflowError):
+                            heatmap_data.append([x, y, 0])
+                            transformed_values.append(0)
+
+                # 计算最小值和最大值
+                if transformed_values:
+                    min_val = min(transformed_values)
+                    max_val = max(transformed_values)
+
+                    # 如果最小值和最大值相等，设置一个默认范围
+                    if min_val == max_val:
+                        min_val = max_val - 1 if max_val > 0 else 0
+                        max_val = max_val + 1
+                else:
+                    min_val, max_val = 0, 10
+
+                heatmap = (
+                    HeatMap(init_opts=opts.InitOpts(width="7000px", height="400px"))
+                    .add_xaxis(numeric_keys)
+                    .add_yaxis(
+                        "",
+                        [f"Sample {i + 1}" for i in range(len(data_rows))],
+                        heatmap_data,
+                        label_opts=opts.LabelOpts(
+                            is_show=True,
+                            formatter=JsCode("function(params){return params.data[2].toFixed(2);}")
+                        ),
+                    )
+                    .set_global_opts(
+                        title_opts=opts.TitleOpts(title=" Heatmap (Log2 transformed)"),
+                        visualmap_opts=opts.VisualMapOpts(
+                            min_=min_val,
+                            max_=max_val,
+                            range_color=["#313695", "#4575b4", "#74add1", "#abd9e9",
+                                         "#e0f3f8", "#ffffbf", "#fee090", "#fdae61",
+                                         "#f46d43", "#d73027", "#a50026"]
+                        ),
+                        xaxis_opts=opts.AxisOpts(
+                            type_="category",
+                            axislabel_opts=opts.LabelOpts(
+                                font_size=10,
+                                interval=0,
+                                margin=15
+                            ),
+                            axistick_opts=opts.AxisTickOpts(
+                                length=8,
+                                is_align_with_label=True
+                            ),
+                        ),
+                        yaxis_opts=opts.AxisOpts(
+                            type_="category",
+                            name=""
+                        ),
+                    )
+                )
+
+                try:
+                    heatmap.options["grid"] = {"left": "2%", "right": "2%", "top": "20%", "bottom": "18%"}
+                except Exception:
+                    pass
+
                 return heatmap.render_embed()
     except Exception as e:
         current_app.logger.error(f"生成热力图失败: {str(e)}")

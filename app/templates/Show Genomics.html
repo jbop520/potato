@@ -5,6 +5,68 @@
     <title>Title</title>
 </head>
 <body>
+<div class="content" style="flex: 1; position: relative; z-index: 11; margin-left: 20px; min-width: 0;">
+        {% if show_excel %}
+            <!-- Excel内容显示 -->
+            <div style="margin-bottom: 20px;">
+                <h2 style="margin: 0 0 10px 0; color: #212529; display: flex; align-items: center; gap: 10px;">
+                    <span>基因组信息</span>
+                    <span style="font-size: 13px; color: #0d6efd; background: #e7f3ff; padding: 4px 10px; border-radius: 12px;">
+                        从Excel读取
+                    </span>
+                </h2>
+            </div>
 
+            <div class="content-box" style="width: 100%; min-height: 700px; padding: 20px; border: 1px solid #dee2e6; border-radius: 8px; background: white; overflow: auto;">
+                {% if excel_html %}
+                    <div class="table-scroll-wrapper">
+                        {{ excel_html|safe }}
+                    </div>
+                {% else %}
+                    <div style="text-align: center; padding: 50px 20px; color: #6c757d;">
+                        <div style="font-size: 48px; margin-bottom: 20px;">📊</div>
+                        <div style="font-size: 16px; margin-bottom: 10px;">正在加载Excel数据...</div>
+                    </div>
+                {% endif %}
+            </div>
+
+        {% else %}
+            <!-- 文件内容显示 -->
+            <div style="margin-bottom: 20px;">
+                <h2 style="margin: 0 0 10px 0; color: #212529; display: flex; align-items: center; gap: 10px;">
+                    {% if selected_file %}
+                        <span>{{ selected_file }}</span>
+                        <span style="font-size: 13px; color: #28a745; background: #e7f3ff; padding: 4px 10px; border-radius: 12px;">
+                            文件模式
+                        </span>
+                    {% else %}
+                        <span>文件浏览器</span>
+                        <span style="font-size: 13px; color: #28a745; background: #e7f3ff; padding: 4px 10px; border-radius: 12px;">
+                            文件模式
+                        </span>
+                    {% endif %}
+                </h2>
+
+                {% if selected_file %}
+                <!--<div style="display: flex; gap: 10px; margin-bottom: 15px;">
+                    <form method="POST" action="{{ url_for('file_view.file_download') }}">
+                        <input type="hidden" name="current_dir" value="{{ current_dir }}">
+                        <input type="hidden" name="filename" value="{{ selected_file }}">
+                        <button type="submit" style="padding: 6px 12px; background: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer;">
+                            📥 下载
+                        </button>
+                    </form>
+
+                    <form method="POST">
+                        <input type="hidden" name="current_dir" value="{{ current_dir }}">
+                        <input type="hidden" name="selected_file" value="">
+                        <input type="hidden" name="show_excel" value="false">
+                        <button type="submit" style="padding: 6px 12px; background: #6c757d; color: white; border: none; border-radius: 4px; cursor: pointer;">
+                            ✕ 清除
+                        </button>
+                    </form>
+                </div>
+                {% endif %}
+            </div>-->
 </body>
 </html>

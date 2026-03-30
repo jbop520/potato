@@ -33,6 +33,7 @@ ROOT_WHITELIST = [
 ]
 DEFAULT_ROOT = "/Users/chenyongtao/Code/potato/Genomics/C454"  # 替换为文件目录
 BASE_GENOME_PATH = "/Users/chenyongtao/Code/potato/Genomics"  # 基因组文件的基础路径
+GENOMICS_EXCEL_PATH = "/Users/chenyongtao/Code/potato/Genomics/genomics_show.xlsx"  # Excel文件路径
 
 
 # ========== 安全校验 ==========
@@ -76,39 +77,51 @@ def get_file_list(current_dir):
     return sorted(dirs), sorted(files)
 
 
-# ========== 从数据库获取基因组信息 ==========
-def get_genome_info_from_db():
-    """从数据库获取所有基因组信息"""
+# ========== 从Excel文件获取基因组信息 ==========
+def get_genome_info_from_excel():
+    """从Excel文件获取所有基因组信息"""
     try:
-        # 从配置获取表名
-        table_name = current_app.config.get('GENOMICS_SHOW', 'genomics_show')
+        # 检查Excel文件是否存在
+        if not os.path.exists(GENOMICS_EXCEL_PATH):
+            return [], [], f"Excel文件不存在: {GENOMICS_EXCEL_PATH}"
 
-        # 使用项目的数据库查询函数
-        query_sql = f"SELECT * FROM {table_name} ORDER BY Number"
-        results = query_db(query_sql, (), one=False)
+        # 读取Excel文件，header=1表示第二行为列名（跳过第一行的"T2T genome assembly"）
+        df = pd.read_excel(GENOMICS_EXCEL_PATH, sheet_name=0, header=1)
 
-        if not results:
-            return [], [], f"表 {table_name} 中没有数据"
+        # 清理数据：删除全为空的行
+        df = df.dropna(how='all')
+
+        # 重命名列，使其更友好（去掉空格和特殊字符）
+        df.columns = [col.strip().replace(' ', '_').replace('/', '_') for col in df.columns]
+
+        # 转换为字典列表
+        records = df.to_dict('records')
 
         # 获取列名
-        if results:
-            columns = list(results[0].keys())
-        else:
-            columns = []
+        columns = list(df.columns)
 
-        return columns, results, f"成功从表 {table_name} 读取 {len(results)} 条记录"
+        # 检查是否有数据
+        if not records:
+            return columns, [], f"Excel文件中没有数据"
+
+        # 添加一些处理信息
+        info = f"成功从Excel读取 {len(records)} 条记录"
+        current_app.logger.info(info)
+
+        return columns, records, info
 
     except Exception as e:
-        current_app.logger.error(f"数据库查询错误: {str(e)}")
-        return [], [], f"数据库查询错误: {str(e)}"
+        current_app.logger.error(f"Excel文件读取错误: {str(e)}")
+        return [], [], f"Excel文件读取错误: {str(e)}"
 
 
 # ========== 生成带链接的HTML表格（可滚动） ==========
-def generate_html_table_from_db(columns, rows, current_dir):
-    """从数据库数据生成带链接的HTML表格，支持横向和纵向滚动"""
+# ========== 生成带链接的HTML表格（可滚动） ==========
+def generate_html_table_from_excel(columns, rows, current_dir):
+    """从Excel数据生成带链接的HTML表格，支持横向和纵向滚动"""
     try:
         if not rows:
-            return '<div class="tip">📭 数据库中没有数据</div>'
+            return '<div class="tip">📭 Excel文件中没有数据</div>'
 
         # 包装一个滚动容器
         html = '<div class="table-scroll-wrapper" style="overflow-x:auto; overflow-y:auto; max-height:500px; border:1px solid #dee2e6; border-radius:6px; padding:10px;">'
@@ -123,23 +136,41 @@ def generate_html_table_from_db(columns, rows, current_dir):
             html += f'<th style="border: 1px solid #dee2e6; padding: 8px; background-color: #f8f9fa; white-space: nowrap;">{display_col}</th>'
         html += '</tr></thead><tbody>'
 
+        # 查找Accession列的索引
+        accession_col = None
+        for col in columns:
+            if 'accession' in col.lower():
+                accession_col = col
+                break
+
         # 添加数据行
         for row in rows:
             html += '<tr>'
             for col in columns:
-                cell_value = str(row.get(col, '')) if row.get(col) is not None else ''
+                # 获取单元格值，如果是NaN或None则显示为空字符串
+                cell_value = row.get(col, '')
 
-                # Accession 列特殊处理
-                if 'accession' in col.lower() and cell_value.strip():
+                # 处理NaN值（pandas的NaN）
+                if pd.isna(cell_value):
+                    cell_value = ''
+                else:
+                    cell_value = str(cell_value)
+
+                # 处理'nan'字符串
+                if cell_value.lower() == 'nan':
+                    cell_value = ''
+
+                # Accession列特殊处理
+                if col == accession_col and cell_value.strip():
                     folder_path = os.path.join(BASE_GENOME_PATH, cell_value.strip())
                     path_exists = os.path.exists(folder_path) and allowed_path(folder_path)
 
                     if path_exists:
-                        cell_value = f'''
+                        cell_display = f'''
                         <form method="POST" class="accession-form" style="display: inline;">
                             <input type="hidden" name="current_dir" value="{folder_path}">
                             <input type="hidden" name="action" value="goto_folder">
-                            <input type="hidden" name="from_database" value="true">
+                            <input type="hidden" name="from_excel" value="true">
                             <button type="submit" class="accession-link" 
                                     title="点击跳转到 {cell_value.strip()} 文件夹"
                                     style="background: none; border: none; color: #0d6efd; 
@@ -150,9 +181,16 @@ def generate_html_table_from_db(columns, rows, current_dir):
                         </form>
                         '''
                     else:
-                        cell_value = f'<span title="文件夹 {cell_value.strip()} 不存在或无权访问" style="color: #6c757d;">{cell_value.strip()}</span>'
+                        cell_display = f'<span title="文件夹 {cell_value.strip()} 不存在或无权访问" style="color: #6c757d;">{cell_value.strip()}</span>'
+                else:
+                    # 普通单元格，如果是空值则显示为空，否则显示原内容
+                    if cell_value == '':
+                        cell_display = ''  # 完全空白的单元格
+                    else:
+                        cell_display = cell_value
 
-                html += f'<td style="border: 1px solid #dee2e6; padding: 8px; white-space: nowrap;">{cell_value}</td>'
+                # 添加单元格，空单元格会显示为空白
+                html += f'<td style="border: 1px solid #dee2e6; padding: 8px; white-space: nowrap;">{cell_display}</td>'
 
             html += '</tr>'
 
@@ -161,11 +199,12 @@ def generate_html_table_from_db(columns, rows, current_dir):
 
         # 添加提示信息
         total_rows = len(rows)
+        excel_file_name = os.path.basename(GENOMICS_EXCEL_PATH)
         html += f'''
         <div class="tip" style="margin-top: 10px; font-size: 13px;">
             📊 共 {total_rows} 条基因组记录 | 
             📁 <strong>点击Accession字段</strong>可跳转到对应文件夹 |
-            💾 数据来源：数据库表 "{current_app.config.get('GENOMICS_SHOW', 'genomics_show')}"
+            💾 数据来源：Excel文件 "{excel_file_name}"
         </div>
         '''
 
@@ -175,19 +214,18 @@ def generate_html_table_from_db(columns, rows, current_dir):
         current_app.logger.error(f"表格生成失败: {str(e)}")
         return f'<div class="error-tip">⚠ 表格生成失败：{str(e)}</div>'
 
-
 # ========== 文件内容解析 ==========
 def parse_file_content(file_path, current_dir):
     """解析文件内容，统一为表格显示"""
     try:
         ext = file_path.rsplit('.', 1)[1].lower() if '.' in file_path else ''
 
-        # Excel 文件提示切换到数据库视图
+        # Excel 文件提示
         if ext == 'xlsx':
             return '''
             <div class="tip">
                 📊 这是一个Excel文件 (.xlsx)<br>
-                💡 <strong>请切换到数据库视图查看基因组信息</strong>
+                💡 <strong>请点击左侧"数据库"按钮查看基因组信息</strong>
             </div>
             '''
 
@@ -222,6 +260,7 @@ def parse_file_content(file_path, current_dir):
     except Exception as e:
         current_app.logger.error(f"文件读取失败: {str(e)}")
         return f'<div class="error-tip">⚠ 文件读取失败：{str(e)}</div>'
+
 
 def df_to_scrollable_html(df):
     """将 Pandas DataFrame 转为可滚动表格 HTML"""
@@ -276,56 +315,27 @@ def text_file_to_scrollable_table(file_path):
         return f'<div class="error-tip">⚠ 文件读取失败：{str(e)}</div>'
 
 
-
-# ========== 普通文本转HTML表格 ==========
-def text_to_html_table(file_path):
-    """将普通文本转换为单列HTML表格"""
-    try:
-        encodings = ['utf-8', 'gbk', 'latin-1']
-        for encoding in encodings:
-            try:
-                with open(file_path, 'rb') as f:
-                    raw_data = f.read(MAX_READ_BYTES)
-                text_data = raw_data.decode(encoding, errors='replace')
-                lines = text_data.splitlines()[:PAGE_SIZE]
-
-                html = '<table class="table-style"><thead><tr><th>内容</th></tr></thead><tbody>'
-                for line in lines:
-                    html += f'<tr><td>{line}</td></tr>'
-                html += '</tbody></table>'
-
-                if len(lines) >= PAGE_SIZE:
-                    html += f'<div class="tip">📄 仅显示前{PAGE_SIZE}行（文件过大，已截断）</div>'
-                return html
-            except UnicodeDecodeError:
-                continue
-        return f'<div class="error-tip">⚠ 文件编码解析失败（尝试：{", ".join(encodings)}）</div>'
-    except Exception as e:
-        current_app.logger.error(f"文本文件读取失败: {str(e)}")
-        return f'<div class="error-tip">⚠ 文件读取失败：{str(e)}</div>'
-
-
 # ========== 核心路由 ==========
 @file_view_bp.route('/file-explorer', methods=['GET', 'POST'])
 def index():
     """文件浏览器主页面"""
     current_dir = request.form.get('current_dir', DEFAULT_ROOT)
     selected_file = request.form.get('selected_file', '')
-    show_database = request.form.get('show_database', 'true') == 'true'  # 默认显示数据库
+    show_excel = request.form.get('show_excel', 'true') == 'true'  # 默认显示Excel数据
     file_content = ""
 
-    # 获取数据库数据（默认显示数据库内容）
-    db_columns = []
-    db_rows = []
-    db_message = ""
-    db_html = ""
+    # 从Excel获取数据（默认显示）
+    excel_columns = []
+    excel_rows = []
+    excel_message = ""
+    excel_html = ""
 
-    if show_database:
-        db_columns, db_rows, db_message = get_genome_info_from_db()
-        if db_columns and db_rows:
-            db_html = generate_html_table_from_db(db_columns, db_rows, current_dir)
+    if show_excel:
+        excel_columns, excel_rows, excel_message = get_genome_info_from_excel()
+        if excel_columns and excel_rows:
+            excel_html = generate_html_table_from_excel(excel_columns, excel_rows, current_dir)
         else:
-            db_html = f'<div class="error-tip">⚠ {db_message}</div>'
+            excel_html = f'<div class="error-tip">⚠ {excel_message}</div>'
 
     if request.method == 'POST':
         action = request.form.get('action', '')
@@ -333,7 +343,7 @@ def index():
         if action == 'enter_dir':
             dir_name = request.form.get('dir_name', '')
             current_dir = os.path.join(current_dir, dir_name)
-            show_database = False  # 进入目录后显示文件
+            show_excel = False  # 进入目录后显示文件
 
         elif action == 'go_up':
             parent_dir = os.path.dirname(current_dir)
@@ -346,18 +356,18 @@ def index():
             if allowed_path(folder_path):
                 current_dir = folder_path
                 # 跳转到文件夹后显示文件列表
-                show_database = False
+                show_excel = False
 
-    # 解析选中的文件内容（只有在不显示数据库时才显示文件内容）
-    if selected_file and allowed_path(current_dir) and not show_database:
+    # 解析选中的文件内容（只有在不显示Excel数据时才显示文件内容）
+    if selected_file and allowed_path(current_dir) and not show_excel:
         file_path = os.path.join(current_dir, selected_file)
         if allowed_file(selected_file) and os.path.exists(file_path):
             file_content = parse_file_content(file_path, current_dir)
         else:
             file_content = '<div class="error-tip">❌ 文件类型不支持或路径错误</div>'
 
-    # 获取当前目录的文件列表（当不显示数据库时）
-    dirs, files = get_file_list(current_dir) if not show_database else ([], [])
+    # 获取当前目录的文件列表（当不显示Excel数据时）
+    dirs, files = get_file_list(current_dir) if not show_excel else ([], [])
 
     return render_template(
         'file_explorer.html',
@@ -366,8 +376,8 @@ def index():
         files=files,
         selected_file=selected_file,
         file_content=file_content,
-        show_database=show_database,
-        db_html=db_html,
+        show_excel=show_excel,
+        excel_html=excel_html,
         page_size=PAGE_SIZE
     )
 

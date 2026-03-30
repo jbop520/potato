@@ -9,35 +9,35 @@
             <div style="display: flex; border: 1px solid #dee2e6; border-radius: 4px; overflow: hidden;">
                 <form method="POST" style="flex: 1;">
                     <input type="hidden" name="current_dir" value="{{ current_dir }}">
-                    <input type="hidden" name="show_database" value="true">
-                    <button type="submit" class="view-btn {% if show_database %}active{% endif %}"
-                            style="width: 100%; padding: 10px; border: none; background: {% if show_database %}#0d6efd{% else %}#f8f9fa{% endif %};
-                                   color: {% if show_database %}white{% else %}#333{% endif %}; cursor: pointer;">
-                        数据库
+                    <input type="hidden" name="show_excel" value="true">
+                    <button type="submit" class="view-btn {% if show_excel %}active{% endif %}"
+                            style="width: 100%; padding: 10px; border: none; background: {% if show_excel %}#0d6efd{% else %}#f8f9fa{% endif %};
+                                   color: {% if show_excel %}white{% else %}#333{% endif %}; cursor: pointer;">
+                        📊 基因组信息
                     </button>
                 </form>
 
                 <form method="POST" style="flex: 1;">
                     <input type="hidden" name="current_dir" value="{{ current_dir }}">
-                    <input type="hidden" name="show_database" value="false">
-                    <button type="submit" class="view-btn {% if not show_database %}active{% endif %}"
-                            style="width: 100%; padding: 10px; border: none; background: {% if not show_database %}#28a745{% else %}#f8f9fa{% endif %};
-                                   color: {% if not show_database %}white{% else %}#333{% endif %}; cursor: pointer;">
-                        文件
+                    <input type="hidden" name="show_excel" value="false">
+                    <button type="submit" class="view-btn {% if not show_excel %}active{% endif %}"
+                            style="width: 100%; padding: 10px; border: none; background: {% if not show_excel %}#28a745{% else %}#f8f9fa{% endif %};
+                                   color: {% if not show_excel %}white{% else %}#333{% endif %}; cursor: pointer;">
+                        📁 文件浏览器
                     </button>
                 </form>
             </div>
         </div>
 
         <!-- 文件视图内容 -->
-        {% if not show_database %}
+        {% if not show_excel %}
         <div class="file-section">
             <div class="dir-header">
                 <!-- 返回上级按钮 -->
                 <form id="goUpForm" method="POST" style="margin-bottom: 15px;">
                     <input type="hidden" name="current_dir" value="{{ current_dir }}">
                     <input type="hidden" name="action" value="go_up">
-                    <input type="hidden" name="show_database" value="false">
+                    <input type="hidden" name="show_excel" value="false">
                     <button type="submit" class="back-btn">
                         ← 返回上级
                     </button>
@@ -57,7 +57,7 @@
                         <input type="hidden" name="current_dir" value="{{ current_dir }}">
                         <input type="hidden" name="action" value="enter_dir">
                         <input type="hidden" name="dir_name" value="{{ dir }}">
-                        <input type="hidden" name="show_database" value="false">
+                        <input type="hidden" name="show_excel" value="false">
                         <button type="submit" class="dir-item"
                                 style="width: 100%; text-align: left; padding: 8px 10px; background: #e7f1ff; border: none;
                                        border-radius: 4px; color: #0d6efd; cursor: pointer; font-size: 13px;">
@@ -76,7 +76,7 @@
                     <form method="POST" style="margin-bottom: 5px;">
                         <input type="hidden" name="current_dir" value="{{ current_dir }}">
                         <input type="hidden" name="selected_file" value="{{ file }}">
-                        <input type="hidden" name="show_database" value="false">
+                        <input type="hidden" name="show_excel" value="false">
                         <button type="submit" class="file-item"
                                 style="width: 100%; text-align: left; padding: 8px 10px; background: white; border: 1px solid #dee2e6;
                                        border-radius: 4px; color: #333; cursor: pointer; font-size: 13px; display: flex; align-items: center;">
@@ -87,15 +87,23 @@
                 {% endfor %}
             </div>
             {% endif %}
+
+            {% if not dirs and not files %}
+            <div style="text-align: center; padding: 30px 10px; color: #6c757d;">
+                <div style="font-size: 24px; margin-bottom: 10px;">📂</div>
+                <div>文件夹为空</div>
+            </div>
+            {% endif %}
         </div>
         {% else %}
-        <!-- 数据库视图提示 -->
+        <!-- Excel视图提示 -->
         <div class="db-hint" style="padding: 15px; background: #f8f9fa; border-radius: 4px; border-left: 4px solid #0d6efd;">
             <div style="font-weight: bold; color: #0d6efd; margin-bottom: 5px;">💡 使用说明</div>
             <div style="font-size: 13px; color: #495057;">
-                <p>1. 显示数据库中的基因组信息</p>
-                <p>2. <strong>点击Accession字段</strong>跳转到对应文件夹</p>
+                <p>1. 显示Excel文件中的基因组信息</p>
+                <p>2. <strong>点击Accession字段</strong>（如C454、C254）跳转到对应文件夹</p>
                 <p>3. 跳转后自动切换到文件视图</p>
+                <p>4. Excel文件路径：genomics/genomics_show.xlsx</p>
             </div>
         </div>
         {% endif %}
@@ -103,29 +111,26 @@
 
     <!-- 右侧内容展示区 -->
     <div class="content" style="flex: 1; position: relative; z-index: 11; margin-left: 20px; min-width: 0;">
-        {% if show_database %}
-            <!-- 数据库内容显示 -->
+        {% if show_excel %}
+            <!-- Excel内容显示 -->
             <div style="margin-bottom: 20px;">
                 <h2 style="margin: 0 0 10px 0; color: #212529; display: flex; align-items: center; gap: 10px;">
-                    <span>基因组数据库</span>
+                    <span>基因组信息</span>
                     <span style="font-size: 13px; color: #0d6efd; background: #e7f3ff; padding: 4px 10px; border-radius: 12px;">
-                        数据库模式
+                        从Excel读取
                     </span>
                 </h2>
             </div>
 
             <div class="content-box" style="width: 100%; min-height: 700px; padding: 20px; border: 1px solid #dee2e6; border-radius: 8px; background: white; overflow: auto;">
-                {% if db_html %}
-                    <!-- 使用与search_cold_nac_m4_3h相同的表格容器结构 -->
+                {% if excel_html %}
                     <div class="table-scroll-wrapper">
-
-                            {{ db_html|safe }}
-
+                        {{ excel_html|safe }}
                     </div>
                 {% else %}
                     <div style="text-align: center; padding: 50px 20px; color: #6c757d;">
-                        <div style="font-size: 48px; margin-bottom: 20px;">🗃️</div>
-                        <div style="font-size: 16px; margin-bottom: 10px;">暂无数据</div>
+                        <div style="font-size: 48px; margin-bottom: 20px;">📊</div>
+                        <div style="font-size: 16px; margin-bottom: 10px;">正在加载Excel数据...</div>
                     </div>
                 {% endif %}
             </div>
@@ -160,7 +165,7 @@
                     <form method="POST">
                         <input type="hidden" name="current_dir" value="{{ current_dir }}">
                         <input type="hidden" name="selected_file" value="">
-                        <input type="hidden" name="show_database" value="false">
+                        <input type="hidden" name="show_excel" value="false">
                         <button type="submit" style="padding: 6px 12px; background: #6c757d; color: white; border: none; border-radius: 4px; cursor: pointer;">
                             ✕ 清除
                         </button>
@@ -169,7 +174,7 @@
                 {% endif %}
             </div>
 
-            <div class="content-box" style="width: 100%; min-height: 700px; padding: 20px; border: 1px solid #dee2e6; border-radius: 8px; background: white; overflow: auto;">
+            <!--<div class="content-box" style="width: 100%; min-height: 700px; padding: 20px; border: 1px solid #dee2e6; border-radius: 8px; background: white; overflow: auto;">
                 {% if file_content %}
                     {{ file_content|safe }}
                 {% elif selected_file %}
@@ -180,9 +185,10 @@
                     <div style="text-align: center; padding: 50px 20px; color: #6c757d;">
                         <div style="font-size: 48px; margin-bottom: 20px;">📁</div>
                         <div style="font-size: 16px; margin-bottom: 10px;">请在左侧选择文件</div>
+                        <div style="font-size: 14px;">或点击"基因组信息"查看Excel数据</div>
                     </div>
                 {% endif %}
-            </div>
+            </div>-->
         {% endif %}
     </div>
 </div>
@@ -190,7 +196,7 @@
 
 {% block extra_css %}
     <style>
-        /* 表格滚动容器样式 - 与search_cold_nac_m4_3h保持一致 */
+        /* 表格滚动容器样式 */
         .table-scroll-wrapper {
             overflow-x: auto;
             overflow-y: auto;
@@ -201,7 +207,7 @@
             padding: 10px;
         }
 
-        /* 表格样式 - 与search_cold_nac_m4_3h保持一致 */
+        /* 表格样式 */
         .data-table {
             width: 100%;
             min-width: 1200px; /* 确保列数过多时触发横向滚动 */
