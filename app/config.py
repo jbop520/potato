@@ -100,3 +100,100 @@ class Config:
     T206HAP1_PROTEIN_FASTA = os.getenv("T206HAP1_PROTEIN_FASTA", "t206Hap1_protein_fasta")
     T206HAP2_CDS_FASTA = os.getenv("T206HAP2_CDS_FASTA", "t206Hap2_cds_fasta")
     T206HAP2_PROTEIN_FASTA = os.getenv("T206HAP2_PROTEIN_FASTA", "t206Hap2_protein_fasta")
+
+    BASE_DIR = Path(__file__).parent
+    # 基因组文件实际存放在项目根目录的 Genomics 文件夹中
+    GENOMICS_DIR = Path(os.getenv("GENOMICS_DIR", "/Users/chenyongtao/Code/potato/Genomics")).resolve()
+
+    BLAST_DB_PATH = BASE_DIR / 'blast_databases'
+    UPLOAD_FOLDER = BASE_DIR / 'uploads'
+    BLAST_RESULTS_FOLDER = BASE_DIR / 'blast_results'
+
+    BLAST_FASTA_FILES = {
+        "DM8_CDS": {
+            "db_type": "nucl",
+            "description": "DM8 CDS 数据库",
+            "fasta_path": str(GENOMICS_DIR / "C254/DM8.cds.fasta")
+        },
+        "DM8_PROTEIN": {
+            "db_type": "prot",
+            "description": "DM8 蛋白质数据库",
+            "fasta_path": str(GENOMICS_DIR / "C254/DM8.protein.fasta")
+        },
+        "DM8_GENOME": {
+            "db_type": "nucl",
+            "description": "DM8 基因组数据库",
+            "fasta_path": str(GENOMICS_DIR / "C254/DM8.genome.fasta")
+        },
+        "C882_CDS": {
+            "db_type": "nucl",
+            "description": "C882 CDS 数据库",
+            "fasta_path": str(GENOMICS_DIR / "C882/C882.cds.fasta")
+        },
+        "C882_PROTEIN": {
+            "db_type": "prot",
+            "description": "C882 蛋白质数据库",
+            "fasta_path": str(GENOMICS_DIR / "C882/C882.protein.fasta")
+        },
+        "C454HAP1_CDS": {
+            "db_type": "nucl",
+            "description": "C454 Hap1 CDS 数据库",
+            "fasta_path": str(GENOMICS_DIR / "C454/C454Hap1.cds.fasta")
+        },
+        "C454HAP1_PROTEIN": {
+            "db_type": "prot",
+            "description": "C454 Hap1 蛋白质数据库",
+            "fasta_path": str(GENOMICS_DIR / "C454/C454Hap1.protein.fasta")
+        },
+        "C454HAP2_CDS": {
+            "db_type": "nucl",
+            "description": "C454 Hap2 CDS 数据库",
+            "fasta_path": str(GENOMICS_DIR / "C454/C454Hap2.cds.fasta")
+        },
+        "C454HAP2_PROTEIN": {
+            "db_type": "prot",
+            "description": "C454 Hap2 蛋白质数据库",
+            "fasta_path": str(GENOMICS_DIR / "C454/C454Hap2.protein.fasta")
+        },
+        "C804HAP1_CDS": {
+            "db_type": "nucl",
+            "description": "C804 Hap1 CDS 数据库",
+            "fasta_path": str(GENOMICS_DIR / "C804/C804Hap1.cds.fasta")
+        },
+        "C804HAP1_PROTEIN": {
+            "db_type": "prot",
+            "description": "C804 Hap1 蛋白质数据库",
+            "fasta_path": str(GENOMICS_DIR / "C804/C804Hap1.protein.fasta")
+        },
+        "C804HAP2_CDS": {
+            "db_type": "nucl",
+            "description": "C804 Hap2 CDS 数据库",
+            "fasta_path": str(GENOMICS_DIR / "C804/C804Hap2.cds.fasta")
+        },
+        "T206HAP1_CDS": {
+            "db_type": "nucl",
+            "description": "T206 Hap1 CDS 数据库",
+            "fasta_path": str(GENOMICS_DIR / "T206/T206Hap1.cds.fasta")
+        },
+        "T206HAP1_PROTEIN": {
+            "db_type": "prot",
+            "description": "T206 Hap1 蛋白质数据库",
+            "fasta_path": str(GENOMICS_DIR / "T206/T206Hap1.protein.fasta")
+        },
+        "T206HAP2_CDS": {
+            "db_type": "nucl",
+            "description": "T206 Hap2 CDS 数据库",
+            "fasta_path": str(GENOMICS_DIR / "T206/T206Hap2.cds.fasta")
+        },
+        "T206HAP2_PROTEIN": {
+            "db_type": "prot",
+            "description": "T206 Hap2 蛋白质数据库",
+            "fasta_path": str(GENOMICS_DIR / "T206/T206Hap2.protein.fasta")
+        },
+    }
+
+    BLAST_DEFAULT_PARAMS = {
+        "evalue": "1e-5",
+        "max_target_seqs": "50",
+        "num_threads": "4"
+    }

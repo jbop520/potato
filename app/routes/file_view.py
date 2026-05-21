@@ -241,7 +241,8 @@ def parse_file_content(file_path, current_dir):
                     nrows=PAGE_SIZE,
                     dtype=str,
                     na_filter=False,
-                    on_bad_lines='skip'
+                    on_bad_lines='skip',
+                    encoding = 'gbk'
                 )
                 if df.empty:
                     return '<div class="tip">📝 文件前500行无数据</div>'
@@ -270,7 +271,7 @@ def df_to_scrollable_html(df):
     # 表头
     html += '<thead><tr>'
     for col in df.columns:
-        html += f'<th style="border:1px solid #dee2e6; padding:8px; background-color:#f8f9fa; white-space: nowrap;">{col}</th>'
+        html += f'<th style="border:1px solid #dee2e6; padding:8px; background-color:#f8f9fa; white-space: nowrap;text-align: left;">{col}</th>'
     html += '</tr></thead><tbody>'
 
     # 数据行

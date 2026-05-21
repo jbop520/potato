@@ -1,0 +1,487 @@
+{% extends "test.html" %}
+
+{% block title %}BLAST - 序列比对搜索{% endblock %}
+
+{% block content %}
+<style>
+.blast-container { padding: 20px; max-width: 1400px; margin: 0 auto; }
+.card { background: white; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin-bottom: 20px; overflow: hidden; }
+.card-header { background: #f5f5f5; padding: 15px 20px; border-bottom: 1px solid #e8e8e8; font-weight: bold; font-size: 18px; color: #1890ff; }
+.card-body { padding: 20px; }
+.form-group { margin-bottom: 15px; }
+.form-group label { display: block; margin-bottom: 5px; font-weight: bold; color: #333; }
+.form-control { width: 100%; padding: 8px 12px; border: 1px solid #d9d9d9; border-radius: 4px; font-size: 14px; box-sizing: border-box; }
+.btn { padding: 8px 20px; border: none; border-radius: 4px; cursor: pointer; font-size: 14px; transition: all 0.3s; }
+.btn-primary { background: #1890ff; color: white; }
+.btn-primary:hover { background: #096dd9; }
+.btn-success { background: #52c41a; color: white; }
+.btn-success:hover { background: #389e0d; }
+.btn-default { background: #f5f5f5; color: #333; border: 1px solid #d9d9d9; }
+.btn-default:hover { background: #e8e8e8; }
+.btn-danger { background: #ff4d4f; color: white; }
+.btn-danger:hover { background: #cf1322; }
+.btn-sm { padding: 4px 12px; font-size: 12px; }
+.input-tabs { display: flex; gap: 0; margin-bottom: 20px; border-bottom: 2px solid #e8e8e8; }
+.input-tab { padding: 10px 20px; cursor: pointer; border: none; background: none; font-size: 14px; color: #666; border-bottom: 2px solid transparent; margin-bottom: -2px; transition: all 0.3s; }
+.input-tab:hover { color: #1890ff; }
+.input-tab.active { color: #1890ff; border-bottom-color: #1890ff; font-weight: bold; }
+.input-panel { display: none; }
+.input-panel.active { display: block; }
+.progress { display: none; margin-top: 15px; }
+.progress.active { display: block; }
+.progress-bar { width: 100%; height: 4px; background: #f0f0f0; border-radius: 2px; overflow: hidden; }
+.progress-bar-fill { width: 0%; height: 100%; background: #1890ff; animation: progress 1.5s ease-in-out infinite; }
+@keyframes progress { 0% { width: 0%; } 50% { width: 70%; } 100% { width: 100%; } }
+.result-table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+.result-table th, .result-table td { padding: 10px 12px; border: 1px solid #e8e8e8; text-align: left; font-size: 13px; }
+.result-table th { background: #fafafa; font-weight: bold; position: sticky; top: 0; }
+.result-table tr:hover { background: #f5f5f5; }
+.table-wrapper { overflow-x: auto; max-height: 500px; }
+.alert { padding: 12px 15px; border-radius: 4px; margin-bottom: 15px; }
+.alert-error { background: #fff2f0; border: 1px solid #ffccc7; color: #ff4d4f; }
+.alert-success { background: #f6ffed; border: 1px solid #b7eb8f; color: #52c41a; }
+.alert-info { background: #e6f7ff; border: 1px solid #91d5ff; color: #1890ff; }
+.alert-warning { background: #fffbe6; border: 1px solid #ffe58f; color: #faad14; }
+.stats { display: flex; gap: 20px; margin-bottom: 15px; padding: 10px; background: #fafafa; border-radius: 4px; flex-wrap: wrap; }
+.stat-item { font-size: 14px; }
+.stat-label { color: #666; }
+.stat-value { font-weight: bold; color: #1890ff; margin-left: 5px; }
+.help-text { font-size: 12px; color: #999; margin-top: 4px; }
+.evalue-bar { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 5px; }
+.evalue-good { background: #52c41a; }
+.evalue-medium { background: #faad14; }
+.evalue-poor { background: #ff4d4f; }
+.section-divider { margin: 20px 0; border: 0; border-top: 1px solid #eee; }
+textarea.form-control { resize: vertical; font-family: monospace; }
+
+/* ===== 结果表格样式 - 参考站点其他页面风格 ===== */
+.results-section {
+    margin-top: 20px;
+}
+.table-wrapper {
+    overflow-x: auto;
+    margin: 10px 0 20px;
+}
+.data-table {
+    border-collapse: collapse;
+    width: 100%;
+    font-size: 14px;
+    border: 1px solid #e8e8e8;
+    border-radius: 4px;
+    overflow: hidden;
+}
+.data-table thead th {
+    background-color: #fafafa;
+    font-weight: bold;
+    color: #333;
+    padding: 10px 15px;
+    border: 1px solid #e8e8e8;
+    text-align: center;
+    position: relative;
+}
+.data-table tbody td {
+    padding: 10px 15px;
+    border: 1px solid #e8e8e8;
+    text-align: center;
+    word-wrap: break-word;
+    word-break: break-all;
+}
+.data-table tbody tr:nth-child(even) {
+    background-color: #fafafa;
+}
+.data-table tbody tr:hover {
+    background-color: #f0f5ff;
+}
+.data-table tbody td.subject-id {
+    color: #1890ff;
+    font-weight: 500;
+}
+.evalue-bar {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    margin-right: 5px;
+}
+.evalue-good { background: #52c41a; }
+.evalue-medium { background: #faad14; }
+.evalue-poor { background: #ff4d4f; }
+.stats-bar {
+    display: flex;
+    gap: 30px;
+    padding: 12px 15px;
+    background: #fafafa;
+    border: 1px solid #e8e8e8;
+    border-radius: 4px;
+    margin-bottom: 15px;
+    flex-wrap: wrap;
+}
+.stat-item {
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+.stat-label {
+    color: #666;
+}
+.stat-value {
+    font-weight: bold;
+    color: #1890ff;
+}
+.stat-divider {
+    color: #ddd;
+}
+.result-count {
+    margin-top: 10px;
+    color: #666;
+    font-size: 14px;
+}
+</style>
+
+<div class="blast-container">
+<h1>BLAST Sequence Search</h1>
+<p>Basic Local Alignment Search Tool - 序列比对搜索</p>
+
+<div class="card">
+<div class="card-header">
+<span style="float:right;font-size:12px;font-weight:normal;color:#666">
+<span id="seqTypeDisplay">序列类型: 未检测</span>
+</span>
+BLAST Search
+</div>
+<div class="card-body">
+<form id="blastForm">
+
+<!-- 输入方式切换标签 -->
+<div class="input-tabs">
+<button type="button" class="input-tab active" data-mode="pasted">粘贴序列</button>
+<button type="button" class="input-tab" data-mode="file">上传文件</button>
+<button type="button" class="input-tab" data-mode="accession">输入序列ID</button>
+</div>
+
+<!-- 方式1: 粘贴序列 -->
+<div class="input-panel active" id="panel-pasted">
+<div class="form-group">
+<label>请输入查询序列 (FASTA 格式或裸序列)</label>
+<textarea id="sequenceText" class="form-control" rows="6" placeholder="&gt;sequence_name
+ATCGATCGATCGATCG...
+
+或者直接粘贴序列：
+ATCGATCGATCGATCG..."></textarea>
+<div class="help-text">支持 FASTA 格式（以 &gt; 开头）或直接粘贴裸序列</div>
+</div>
+</div>
+
+<!-- 方式2: 上传文件 -->
+<div class="input-panel" id="panel-file">
+<div class="form-group">
+<label>上传查询序列文件 (FASTA)</label>
+<input type="file" id="queryFile" class="form-control" accept=".fasta,.fa,.fna,.ffn,.faa,.txt">
+<div class="help-text">支持 .fasta, .fa, .fna, .faa 格式</div>
+</div>
+</div>
+
+<!-- 方式3: 输入序列ID -->
+<div class="input-panel" id="panel-accession">
+<div class="form-group">
+<label>输入序列 Accession ID</label>
+<input type="text" id="accessionId" class="form-control" placeholder="例如: NM_001234567.1, XP_015789012.1">
+<div class="help-text">输入序列在数据库中的唯一标识符</div>
+</div>
+</div>
+
+<hr class="section-divider">
+
+<!-- 数据库选择 -->
+<div class="form-group">
+<label>数据库</label>
+<select id="database" class="form-control">
+<option value="__temp__">[上传自定义数据库文件]</option>
+<option value="" disabled>──────────</option>
+{% for db_name, db_info in databases.items() %}
+<option value="{{ db_name }}" {% if not db_info.built %}disabled style="color:#999"{% endif %}>
+    {{ db_name }} {% if db_info.built %} (已就绪){% else %} (未构建){% endif %}
+</option>
+{% endfor %}
+</select>
+<div class="help-text">选择「上传自定义数据库文件」可上传您自己的 FASTA 数据库</div>
+</div>
+
+<!-- 上传自定义数据库文件 -->
+<div class="form-group" id="dbFileGroup" style="display:none">
+<label>上传数据库文件 (FASTA)</label>
+<input type="file" id="dbFile" class="form-control" accept=".fasta,.fa,.fna,.ffn,.faa,.txt">
+<div class="help-text">选择「上传自定义数据库文件」时需上传作为搜索目标的数据库 FASTA 文件</div>
+</div>
+
+<hr class="section-divider">
+
+<!-- BLAST 程序选择 -->
+<div class="form-group">
+<label>BLAST 程序</label>
+<select id="program" class="form-control">
+<option value="auto">自动选择 (推荐)</option>
+<option value="blastn">blastn - 核酸 → 核酸</option>
+<option value="blastp">blastp - 蛋白 → 蛋白</option>
+<option value="blastx">blastx - 核酸(翻译) → 蛋白</option>
+<option value="tblastn">tblastn - 蛋白 → 核酸(翻译)</option>
+<option value="tblastx">tblastx - 核酸(翻译) → 核酸(翻译)</option>
+</select>
+</div>
+
+<!-- 高级参数（可折叠） -->
+<details style="margin-bottom:15px">
+<summary style="cursor:pointer;color:#1890ff;font-weight:bold">高级参数设置</summary>
+<div style="padding:15px;margin-top:10px;background:#fafafa;border-radius:4px">
+<div class="form-group">
+<label>E-value 阈值</label>
+<input type="text" id="evalue" class="form-control" value="{{ default_params.evalue }}">
+<div class="help-text">期望值阈值，越小越严格（例如: 1e-5, 1e-10, 0.001）</div>
+</div>
+<div class="form-group">
+<label>最大目标序列数</label>
+<input type="number" id="maxTargetSeqs" class="form-control" value="{{ default_params.max_target_seqs }}" min="1" max="10000">
+</div>
+<div class="form-group">
+<label>CPU 线程数</label>
+<input type="number" id="numThreads" class="form-control" value="{{ default_params.num_threads }}" min="1" max="32">
+</div>
+</div>
+</details>
+
+<div style="display:flex;gap:10px">
+<button type="submit" class="btn btn-primary">▶ BLAST</button>
+<button type="button" id="validateBtn" class="btn btn-default">验证序列</button>
+<button type="button" id="clearBtn" class="btn btn-default">清空</button>
+</div>
+</form>
+
+<div id="progress" class="progress">
+<div class="progress-bar"><div class="progress-bar-fill"></div></div>
+<p style="margin-top:10px;color:#666">正在运行 BLAST，请稍候...</p>
+</div>
+</div>
+</div>
+
+<!-- 验证结果 -->
+<div id="validationResult" style="display:none"></div>
+
+<!-- 搜索结果 -->
+<div id="searchResult" style="display:none">
+<div class="card">
+<div class="card-header">
+BLAST Results
+<button id="downloadCsvBtn" class="btn btn-success btn-sm" style="float:right">下载 CSV</button>
+</div>
+<div class="card-body">
+<div class="results-section">
+<div id="resultStats" class="stats-bar"></div>
+<div id="resultTable" class="table-wrapper"></div>
+<p id="resultCount" class="result-count"></p>
+</div>
+</div>
+</div>
+</div>
+</div>
+
+<script>
+const inputTabs = document.querySelectorAll(".input-tab");
+const panels = {};
+let currentMode = "pasted";
+
+document.querySelectorAll(".input-panel").forEach(p => {
+    panels[p.id.replace("panel-", "")] = p;
+});
+
+inputTabs.forEach(tab => {
+    tab.addEventListener("click", () => {
+        inputTabs.forEach(t => t.classList.remove("active"));
+        tab.classList.add("active");
+        currentMode = tab.dataset.mode;
+        Object.keys(panels).forEach(k => {
+            panels[k].classList.toggle("active", k === currentMode);
+        });
+    });
+});
+
+document.getElementById("database").addEventListener("change", function() {
+    document.getElementById("dbFileGroup").style.display = this.value === "__temp__" ? "block" : "none";
+});
+
+// 验证
+document.getElementById("validateBtn").addEventListener("click", async () => {
+    const fd = new FormData();
+    fd.append("input_mode", currentMode);
+    if (currentMode === "pasted") {
+        const t = document.getElementById("sequenceText").value.trim();
+        if (!t) { alert("请输入序列"); return; }
+        fd.append("sequence_text", t);
+    } else if (currentMode === "file") {
+        const f = document.getElementById("queryFile").files[0];
+        if (!f) { alert("请选择文件"); return; }
+        fd.append("file", f);
+    } else if (currentMode === "accession") {
+        const a = document.getElementById("accessionId").value.trim();
+        if (!a) { alert("请输入序列ID"); return; }
+        fd.append("accession_id", a);
+    }
+    try {
+        const r = await fetch("/blast/api/validate", {method:"POST",body:fd});
+        const d = await r.json();
+        if (d.success) {
+            document.getElementById("seqTypeDisplay").textContent = "序列类型: " + (d.seq_type === "nucl" ? "核酸 (DNA)" : "蛋白质");
+            document.getElementById("validationResult").style.display = "block";
+            let html = "<div class=\"alert alert-success\"><strong>✓ 验证成功</strong><br>";
+            html += "序列类型: " + (d.seq_type === "nucl" ? "核酸" : "蛋白") + "<br>";
+            html += "序列数量: " + d.sequence_count + "<br>";
+            html += "序列ID: " + d.sequence_ids.join(", ") + "</div>";
+            if (d.sequence_preview) {
+                d.sequence_preview.forEach(s => {
+                    html += "<div class=\"alert alert-info\"><strong>" + s.id + "</strong> (长度: " + s.length + ")<br><code>" + s.sequence + "...</code></div>";
+                });
+            }
+            document.getElementById("validationResult").innerHTML = html;
+        } else {
+            document.getElementById("validationResult").style.display = "block";
+            document.getElementById("validationResult").innerHTML = "<div class=\"alert alert-error\"><strong>✗ 错误</strong><br>" + d.error + "</div>";
+        }
+    } catch(e) {
+        document.getElementById("validationResult").style.display = "block";
+        document.getElementById("validationResult").innerHTML = "<div class=\"alert alert-error\">验证失败: " + e.message + "</div>";
+    }
+});
+
+// 格式化 E-value 显示
+function formatEValue(val) {
+    const num = parseFloat(val);
+    if (num === 0) return "0";
+    if (num < 0.0001) return num.toExponential(2);
+    if (num < 1) return num.toFixed(4);
+    return num.toFixed(2);
+}
+
+// 获取 E-value 颜色等级
+function getEValueGrade(val) {
+    const num = parseFloat(val);
+    if (num <= 1e-50) return "good";
+    if (num <= 1e-10) return "medium";
+    return "poor";
+}
+
+// 提交 BLAST
+document.getElementById("blastForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const fd = new FormData();
+    fd.append("input_mode", currentMode);
+    if (currentMode === "pasted") {
+        const t = document.getElementById("sequenceText").value.trim();
+        if (!t) { alert("请输入序列"); return; }
+        fd.append("sequence_text", t);
+    } else if (currentMode === "file") {
+        const f = document.getElementById("queryFile").files[0];
+        if (!f) { alert("请选择文件"); return; }
+        fd.append("file", f);
+    } else if (currentMode === "accession") {
+        const a = document.getElementById("accessionId").value.trim();
+        if (!a) { alert("请输入序列ID"); return; }
+        fd.append("accession_id", a);
+    }
+    const db = document.getElementById("database").value;
+    if (!db) { alert("请选择或上传数据库"); return; }
+    fd.append("database", db);
+    if (db === "__temp__") {
+        const dbf = document.getElementById("dbFile").files[0];
+        if (!dbf) { alert("请上传数据库文件"); return; }
+        fd.append("db_file", dbf);
+    }
+    fd.append("program", document.getElementById("program").value);
+    fd.append("evalue", document.getElementById("evalue").value);
+    fd.append("max_target_seqs", document.getElementById("maxTargetSeqs").value);
+    fd.append("num_threads", document.getElementById("numThreads").value);
+    document.getElementById("progress").classList.add("active");
+    document.getElementById("searchResult").style.display = "none";
+    try {
+        const r = await fetch("/blast/api/search", {method:"POST",body:fd});
+        const d = await r.json();
+        if (d.success) {
+            const hits = d.hits || [];
+            // 统计信息
+            let bestEvalue = hits.length > 0 ? Math.min(...hits.map(h => parseFloat(h.evalue))) : '-';
+            let statsHtml = '<div class="stat-item"><span class="stat-label">BLAST 程序:</span><span class="stat-value">' + (d.program || '-') + '</span></div>';
+            statsHtml += '<span class="stat-divider">|</span>';
+            statsHtml += '<div class="stat-item"><span class="stat-label">匹配结果:</span><span class="stat-value">' + (d.total || hits.length) + '</span></div>';
+            statsHtml += '<span class="stat-divider">|</span>';
+            statsHtml += '<div class="stat-item"><span class="stat-label">最佳 E-value:</span><span class="stat-value">' + (bestEvalue !== '-' ? formatEValue(bestEvalue) : '-') + '</span></div>';
+            document.getElementById("resultStats").innerHTML = statsHtml;
+
+            if (hits.length === 0) {
+                document.getElementById("resultTable").innerHTML = '<div class="alert alert-info">未找到显著匹配结果</div>';
+                document.getElementById("resultCount").textContent = '';
+            } else {
+                let html = '<table class="data-table">';
+                html += '<thead><tr>';
+                html += '<th>Query ID</th>';
+                html += '<th>Subject ID</th>';
+                html += '<th>Identity (%)</th>';
+                html += '<th>比对长度</th>';
+                html += '<th>错配数</th>';
+                html += '<th>E-value</th>';
+                html += '<th>Bit Score</th>';
+                html += '</tr></thead><tbody>';
+                hits.forEach((h, idx) => {
+                    const evalue = parseFloat(h.evalue);
+                    const grade = getEValueGrade(evalue);
+                    html += '<tr>';
+                    html += '<td>' + (h.query_id || '') + '</td>';
+                    html += '<td class="subject-id">' + (h.subject_id || '') + '</td>';
+                    html += '<td>' + (parseFloat(h.identity) || 0).toFixed(2) + '</td>';
+                    html += '<td>' + (parseInt(h.alignment_length) || 0) + '</td>';
+                    html += '<td>' + (parseInt(h.mismatches) || 0) + '</td>';
+                    html += '<td><span class="evalue-bar evalue-' + grade + '"></span>' + formatEValue(evalue) + '</td>';
+                    html += '<td>' + (parseFloat(h.bit_score) || 0).toFixed(1) + '</td>';
+                    html += '</tr>';
+                });
+                html += '</tbody></table>';
+                document.getElementById("resultTable").innerHTML = html;
+                document.getElementById("resultCount").textContent = '共找到 ' + hits.length + ' 条匹配记录';
+            }
+            document.getElementById("searchResult").style.display = "block";
+        } else {
+            alert("错误: " + (d.error || "BLAST 搜索失败"));
+        }
+    } catch(e) {
+        alert("BLAST 失败: " + e.message);
+    } finally {
+        document.getElementById("progress").classList.remove("active");
+    }
+});
+
+// 下载 CSV
+document.getElementById("downloadCsvBtn").addEventListener("click", () => {
+    const tbl = document.querySelector(".data-table");
+    if (!tbl) return;
+    let csv = "";
+    tbl.querySelectorAll("tr").forEach(row => {
+        const cols = row.querySelectorAll("th,td");
+        csv += Array.from(cols).map(c => "\"" + c.textContent.trim() + "\"").join(",") + "\n";
+    });
+    const blob = new Blob(["\uFEFF" + csv], {type:"text/csv"});
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "blast_results.csv";
+    a.click();
+});
+
+// 清空
+document.getElementById("clearBtn").addEventListener("click", () => {
+    document.getElementById("sequenceText").value = "";
+    document.getElementById("accessionId").value = "";
+    document.getElementById("queryFile").value = "";
+    document.getElementById("dbFile").value = "";
+    document.getElementById("validationResult").style.display = "none";
+    document.getElementById("searchResult").style.display = "none";
+    document.getElementById("seqTypeDisplay").textContent = "序列类型: 未检测";
+});
+</script>
+{% endblock %}

@@ -24,6 +24,9 @@ from .routes.search_tuber_development import search_tuber_development_bp
 from .routes.transcriptomics_cold_tool import transcriptomics_cold_tool_bp
 from .routes.transcriptomics_tool import transcriptomics_tool_bp
 
+from .routes.blast import blast_bp
+from .utils.blast_utils import blast_runner
+
 
 def create_app():
     app = Flask(__name__)
@@ -53,4 +56,7 @@ def create_app():
     app.register_blueprint(file_view_bp)
     app.register_blueprint(genomics_id_search_bp, url_prefix='/genomics_id_search_bp')
     app.register_blueprint(genomics_key_search_bp, url_prefix='/genomics')
+
+    blast_runner.init_app(app)
+    app.register_blueprint(blast_bp)
     return app

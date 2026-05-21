@@ -174,9 +174,11 @@
                 {% endif %}
             </div>
 
-            <!--<div class="content-box" style="width: 100%; min-height: 700px; padding: 20px; border: 1px solid #dee2e6; border-radius: 8px; background: white; overflow: auto;">
+            <div class="content-box" style="width: 100%; min-height: 700px; padding: 20px; border: 1px solid #dee2e6; border-radius: 8px; background: white; overflow: auto;">
                 {% if file_content %}
-                    {{ file_content|safe }}
+                    <div class="table-style">
+                        {{ file_content|safe }}
+                    </div>
                 {% elif selected_file %}
                     <div style="padding: 20px; color: #dc3545; text-align: center;">
                         ⚠ 无法读取文件内容
@@ -188,7 +190,7 @@
                         <div style="font-size: 14px;">或点击"基因组信息"查看Excel数据</div>
                     </div>
                 {% endif %}
-            </div>-->
+            </div>
         {% endif %}
     </div>
 </div>
@@ -218,7 +220,7 @@
             white-space: nowrap; /* 禁止内容换行 */
             padding: 12px 15px;
             border: 1px solid #e8e8e8;
-            text-align: center;
+            text-align: left;
         }
 
         .data-table th {
@@ -239,13 +241,14 @@
         .table-style th, .table-style td {
             border: 1px solid #dee2e6;
             padding: 10px 12px;
-            text-align: left;
+            text-align: left !important;
         }
         .table-style th {
             background-color: #f8f9fa;
             font-weight: bold;
             position: sticky;
             top: 0;
+            text-align: left !important;
         }
         .table-style tr:hover {
             background-color: #f8f9fa;
