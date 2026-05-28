@@ -434,7 +434,7 @@ document.getElementById("blastForm").addEventListener("submit", async (e) => {
                     const grade = getEValueGrade(evalue);
                     html += '<tr>';
                     html += '<td>' + (h.query_id || '') + '</td>';
-                    html += '<td class="subject-id">' + (h.subject_id || '') + '</td>';
+                    html += '<td class="subject-id"><a href="/genomics_id_search_bp/?q=' + encodeURIComponent(h.subject_id || '') + '" target="_blank">' + (h.subject_id || '') + '</a></td>';
                     html += '<td>' + (parseFloat(h.identity) || 0).toFixed(2) + '</td>';
                     html += '<td>' + (parseInt(h.alignment_length) || 0) + '</td>';
                     html += '<td>' + (parseInt(h.mismatches) || 0) + '</td>';
