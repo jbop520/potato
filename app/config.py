@@ -18,6 +18,7 @@ class Config:
     TABLE_C882_C804_PROTEIN_FILTER = os.getenv("TABLE_C882_C804_PROTEIN_FILTER", "c882_c804_protein_filter")
     TRANSCRIPTOMICS_TOOL =os.getenv("TRANSCRIPTOMICS_TOOL", "transcriptomics_tool")
     MERGED_GENE_TREATMENT_RESULT =os.getenv("MERGED_GENE_TREATMENT_RESULT", "merged_gene_treatment_result")
+    DM8_NCBI_MAPPING = os.getenv("DM8_NCBI_MAPPING", "dm8_ncbi_mapping")
 
     BACTERIAL_WILT_REF_C454 =os.getenv("BACTERIAL_WILT_REF_C454","bacterial_wilt_ref_c454")
     BACTERIAL_WILT_REF_C804 = os.getenv("BACTERIAL_WILT_REF_C804", "bacterial_wilt_ref_c804")

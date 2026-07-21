@@ -172,7 +172,7 @@
 </form>
 
 <!-- 如果没有查询到结果时显示提示 -->
-{% if q and not related_treatments %}
+{% if q and not related_treatments and not ncbi_link %}
     <div class="empty">
         没有找到与 "<b>{{ q|e }}</b>" 匹配的记录。
         {% if q.startswith('DM8') or q.startswith('ScomH1c') or q.startswith('ScanH1c') or q.startswith('SverC') or q.startswith('Smochap1C') or q.startswith('SchoHap1C') %}
@@ -190,6 +190,15 @@
         {% for treatment in related_treatments %}
             <a href="{{ treatment.url }}" class="relation-btn">{{ treatment.name }}</a>
         {% endfor %}
+    </div>
+{% endif %}
+
+{% if q and ncbi_link %}
+    <div class="relation-container">
+        <span class="relation-label">NCBI：</span>
+        <a href="{{ ncbi_link.url }}" class="relation-btn" target="_blank" rel="noopener noreferrer">
+            {{ ncbi_link.id }}
+        </a>
     </div>
 {% endif %}
 

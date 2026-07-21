@@ -1,3 +1,5 @@
+from urllib.parse import quote
+
 from flask import Blueprint, request, render_template, current_app, url_for
 from ..db import query_db
 
@@ -101,6 +103,37 @@ def get_gene_related_treatments(gene_id):
         return related_treatments
 
 
+def get_gene_ncbi_link(gene_id):
+    mapping_table = current_app.config.get("DM8_NCBI_MAPPING", "dm8_ncbi_mapping")
+    try:
+        row = query_db(
+            f"""
+            SELECT ncbi_id
+            FROM `{mapping_table}`
+            WHERE gene_id = %s
+              AND ncbi_id IS NOT NULL
+              AND ncbi_id <> ''
+            LIMIT 1
+            """,
+            (gene_id,),
+            one=True,
+        )
+        if not row:
+            return None
+
+        ncbi_id = (row.get("ncbi_id") or "").strip()
+        if not ncbi_id:
+            return None
+
+        return {
+            "id": ncbi_id,
+            "url": f"https://www.ncbi.nlm.nih.gov/search/all/?term={quote(ncbi_id)}",
+        }
+    except Exception as e:
+        current_app.logger.error(f"Query NCBI mapping for gene [{gene_id}] failed: {str(e)}")
+        return None
+
+
 @search_id_transcriptomics_bp.route("/", methods=["GET"])
 def index():
     # 同时接受 q 和 ref_id 参数
@@ -108,6 +141,7 @@ def index():
 
     cfg = current_app.config
     related_treatments = []
+    ncbi_link = None
 
     print(f"=== search_id_transcriptomics 调试信息 ===")
     print(f"接收到的参数: {dict(request.args)}")
@@ -118,6 +152,7 @@ def index():
     if q:
         # 获取关联处理
         related_treatments = get_gene_related_treatments(q)
+        ncbi_link = get_gene_ncbi_link(q)
         print(f"查询到的处理数量: {len(related_treatments)}")
 
     print("Related Treatments:")
@@ -132,7 +167,8 @@ def index():
     return render_template(
         "search_id_transcriptomics.html",
         q=q,
-        related_treatments=related_treatments
+        related_treatments=related_treatments,
+        ncbi_link=ncbi_link
     )
 
 
